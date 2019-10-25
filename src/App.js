@@ -1,26 +1,42 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { Row, Col } from 'react-bootstrap'
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends React.Component{
+  constructor(){
+    super()
+    this.state = {
+      gameState : [[0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0],
+                   [0,0,0,1,2,0,0,0],
+                   [0,0,0,2,1,0,0,0],
+                   [0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0],]
+    }
+  }
+
+
+
+  render(){
+     
+    let updateBoard = this.state.gameState.map(i => {
+        return(
+          <Row>
+            {i.map(j => <Col>{j}</Col>)}
+          </Row>
+        )
+      })
+
+    return(
+      <div>
+        {updateBoard}
+        working?
+      </div>
+    )
+  }
 }
 
 export default App;
