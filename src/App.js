@@ -18,6 +18,7 @@ class App extends React.Component{
       activePlayer : 1
     }
     this.handleClick = this.handleClick.bind(this);
+    this.handleGameState = this.handleGameState.bind(this);
   }
 
   handleClick(){
@@ -30,13 +31,25 @@ class App extends React.Component{
     
   }
 
+  handleGameState(rowIndex, colIndex, player){
+      let newGameState = this.state.gameState;
+      newGameState[rowIndex][colIndex] = player;
+      this.setState({gameState: newGameState})
+      console.log(newGameState)
+  }
+
   render(){
      
     //create a row for each row in the gameState. Map each item in each row of the gameState to a tile.
-    let updateBoard = this.state.gameState.map(i => {
+    let updateBoard = this.state.gameState.map((i, rowIndex) => {
         return(
           <Row>
-            {i.map(j => <Tile tileValue = {j} activePlayer = {this.state.activePlayer}/>)}
+            {i.map((j, colIndex) => <Tile 
+                                      tileValue = {j} 
+                                      handleGameState = {this.handleGameState}
+                                      rowIndex = {rowIndex} 
+                                      colIndex = {colIndex} 
+                                      activePlayer = {this.state.activePlayer}/>)}
           </Row>
         )
       })

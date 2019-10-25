@@ -1,6 +1,6 @@
 import React from 'react';
 import '../App.css';
-import { Row, Col } from 'react-bootstrap'
+import { Col } from 'react-bootstrap'
 
 class Tile extends React.Component{
     constructor(props){
@@ -11,10 +11,11 @@ class Tile extends React.Component{
         this.handleClick = this.handleClick.bind(this);
     }
 
-    handleClick(activePlayer){
+    handleClick(){
         this.setState({
-            owner: activePlayer,
+            owner: this.props.activePlayer,
         })
+        this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer);
     }
 
     render(){
@@ -30,7 +31,7 @@ class Tile extends React.Component{
         }
 
         return(
-            <Col onClick={this.handleClick.bind(this, this.props.activePlayer)}><div className = {tileStyle}></div></Col>
+            <Col onClick={this.handleClick}><div className = {tileStyle}></div></Col>
         )
     }
 }
