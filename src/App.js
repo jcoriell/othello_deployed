@@ -3,6 +3,11 @@ import './App.css';
 import { Row, Container, Col } from 'react-bootstrap';
 import Tile from './components/Tile';
 
+const black = 1;
+const white = 2;
+const available = 8;
+const blank = 0;
+
 class App extends React.Component{
   constructor(){
     super()
@@ -10,18 +15,18 @@ class App extends React.Component{
       // 8 means valid move for current player, 1 is black, 2 white
       gameState : [[0,0,0,0,0,0,0,0],
                    [0,0,0,0,0,0,0,0],
-                   [0,0,0,0,8,0,0,0],
-                   [0,0,0,1,2,8,0,0],
-                   [0,0,8,2,1,0,0,0],
-                   [0,0,0,8,0,0,0,0],
+                   [0,0,0,available,0,0,0,0],
+                   [0,0,available,white,black,0,0,0],
+                   [0,0,0,black,white,available,0,0],
+                   [0,0,0,0,available,0,0,0],
                    [0,0,0,0,0,0,0,0],
                    [0,0,0,0,0,0,0,0],],
       gameStateTranspose : [[0,0,0,0,0,0,0,0],
                             [0,0,0,0,0,0,0,0],
-                            [0,0,0,0,8,0,0,0],
-                            [0,0,0,1,2,8,0,0],
-                            [0,0,8,2,1,0,0,0],
-                            [0,0,0,8,0,0,0,0],
+                            [0,0,0,available,0,0,0,0],
+                            [0,0,available,white,black,0,0,0],
+                            [0,0,0,black,white,available,0,0],
+                            [0,0,0,0,available,0,0,0],
                             [0,0,0,0,0,0,0,0],
                             [0,0,0,0,0,0,0,0],],
       activePlayer : 1,
@@ -43,45 +48,101 @@ class App extends React.Component{
     // if you're on the edge, don't check the next tile.
     if (colIndex === 7){return false}
     // if you're not on the edge, see if the tile on the right is the same color as the person who just played and if the upcoming player has a piece in this row, return true.
-    else if (this.state.gameState[rowIndex][colIndex + 1] === this.state.activePlayer
-              && this.state.gameState[rowIndex].indexOf(this.state.inactivePlayer) !== -1){
+    else {
+      let firstInactivePlayerIndex = this.state.gameState[rowIndex].indexOf(this.state.inactivePlayer)
+      let inactivePlayerExistsInRow = firstInactivePlayerIndex !== -1 ? true : false
+      let tileOnRight = this.state.gameState[rowIndex][colIndex + 1]
+      let tilesBetweenMeAndFirstInactivePlayer;
+      if (firstInactivePlayerIndex === -1){return false}
+      else if (firstInactivePlayerIndex > colIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(colIndex + 1, firstInactivePlayerIndex)
+      } 
+      else if (firstInactivePlayerIndex < colIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(firstInactivePlayerIndex, colIndex)
+      }
+      let noBlankTilesBetween = tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1 ? true : false 
+      
+      if (tileOnRight === this.state.activePlayer && inactivePlayerExistsInRow && noBlankTilesBetween)
+      {
       return true
-    }
-    else {return false}
+      }
+      else{return false}
+
   }
+}
 
   checkTileOnLeft(rowIndex, colIndex){
-      // if you're on the edge, don't check the previous tile.
-      if (colIndex === 0){return false}
+    // if you're on the edge, don't check the previous tile.
+    if (colIndex === 0){return false}
+    else{
+      let firstInactivePlayerIndex = this.state.gameState[rowIndex].indexOf(this.state.inactivePlayer)
+      let inactivePlayerExistsInRow = firstInactivePlayerIndex !== -1 ? true : false
+      let tileOnLeft = this.state.gameState[rowIndex][colIndex - 1]
+      let tilesBetweenMeAndFirstInactivePlayer;
+      if (firstInactivePlayerIndex === -1 ){return false}
+      else if( firstInactivePlayerIndex > colIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(colIndex, firstInactivePlayerIndex)
+      }
+      else if( firstInactivePlayerIndex < colIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(firstInactivePlayerIndex, colIndex)
+      }
+      let noBlankTilesBetween = tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1 ? true : false
       // if you're not on the edge, see if the tile on the left is the same color as the person who just played and if the upcoming player has a piece in this row, return true.
-      else if (this.state.gameState[rowIndex][colIndex - 1] === this.state.activePlayer 
-              && this.state.gameState[rowIndex].indexOf(this.state.inactivePlayer) !== -1){
+      if (tileOnLeft === this.state.activePlayer && inactivePlayerExistsInRow && noBlankTilesBetween){
         return true
       }
       else {return false}
+    }
+ 
+  
   }
 
   checkTileAbove(rowIndex, colIndex){
     // if you're on the edge, don't check above.
     if (rowIndex === 0){return false}
-    // if you're not on the edge, see if the tile above is the same color as the person who just played and if the upcoming player has a piece in this column, return true.
-    else if(this.state.gameState[rowIndex-1][colIndex] === this.state.activePlayer 
-            && this.state.gameStateTranspose[colIndex].indexOf(this.state.inactivePlayer) !== -1){
-      return true
+    else{
+      let firstInactivePlayerIndex = this.state.gameStateTranspose[colIndex].indexOf(this.state.inactivePlayer)
+      let inactivePlayerExistsInColumn= firstInactivePlayerIndex !== -1 ? true : false
+      let tileAbove = this.state.gameState[rowIndex - 1][colIndex]
+      let tilesBetweenMeAndFirstInactivePlayer;
+      if (firstInactivePlayerIndex === -1) {return false}
+      else if (firstInactivePlayerIndex > rowIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(rowIndex, firstInactivePlayerIndex)
+      }
+      else if (firstInactivePlayerIndex < rowIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(firstInactivePlayerIndex, rowIndex)
+      }
+      let noBlankTilesBetween = (tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1)? true : false
+      if (tileAbove === this.state.activePlayer && inactivePlayerExistsInColumn && noBlankTilesBetween){
+        return true
+      }
+      else {return false}
     }
-    else{return false}
   }
 
   checkTileBelow(rowIndex, colIndex){
-    // if you're on the edge, don't check below.
+    // if you're on the edge, don't check above.
     if (rowIndex === 7){return false}
-    // if you're not on the edge, see if the tile below is the same color as the person who just played and if the upcoming player has a piece in this column, return true.
-    else if(this.state.gameState[rowIndex+1][colIndex] === this.state.activePlayer 
-            && this.state.gameStateTranspose[colIndex].indexOf(this.state.inactivePlayer) !== -1){
-      return true
+    else{
+      let firstInactivePlayerIndex = this.state.gameStateTranspose[colIndex].indexOf(this.state.inactivePlayer)
+      let inactivePlayerExistsInColumn= firstInactivePlayerIndex !== -1 ? true : false
+      let tileBelow = this.state.gameState[rowIndex + 1][colIndex]
+      let tilesBetweenMeAndFirstInactivePlayer;
+      if (firstInactivePlayerIndex === -1) {return false}
+      else if (firstInactivePlayerIndex > rowIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(rowIndex + 1, firstInactivePlayerIndex)
+      }
+      else if (firstInactivePlayerIndex < rowIndex){
+        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(firstInactivePlayerIndex, rowIndex)
+      }
+      let noBlankTilesBetween = (tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1)? true : false
+      if (tileBelow === this.state.activePlayer && inactivePlayerExistsInColumn && noBlankTilesBetween){
+        return true
+      }
+      else {return false}
     }
-    else{return false}
   }
+
 
   checkNorthEast(rowIndex, colIndex){
     if (rowIndex ===  0 || colIndex === 7){return false}
@@ -178,11 +239,11 @@ class App extends React.Component{
 
 
   setPlayer(){
-    if(this.state.activePlayer === 1){
-      this.setState({activePlayer: 2, inactivePlayer: 1})
+    if(this.state.activePlayer === black){
+      this.setState({activePlayer: white, inactivePlayer: black})
     }
-    else if (this.state.activePlayer === 2){
-      this.setState({activePlayer: 1, inactivePlayer: 2})
+    else if (this.state.activePlayer === white){
+      this.setState({activePlayer: black, inactivePlayer: white})
     } 
   }
 
@@ -194,72 +255,61 @@ class App extends React.Component{
      let updatedGameStateTranspose = this.state.gameStateTranspose;
      let activePlayer = this.state.activePlayer;
 
-    /*
-     //Determine the index of the first occurrence of the active player's color in each row and column.
-     let firstIndeces = updatedGameState.map(i => i.indexOf(this.state.activePlayer))
-     let firstIndecesTranspose = updatedGameStateTranspose.map(i => i.indexOf(this.state.activePlayer))
-
-     //For Rows: Change all tiles of the opposite color between input tile and the first tile that has the active player color
-     if (firstIndeces[rowIndex] !== -1){
-       //if the piece was placed on the left side of other pieces of the acitive player
-       for (let i = colIndex; i < firstIndeces[rowIndex]; i++){
-         updatedGameState[rowIndex][i] = this.state.activePlayer;
-         updatedGameStateTranspose[i][rowIndex] = this.state.activePlayer;
-       }
-       //If the piece was place on the right side of other pieces of the active player
-       for (let i = firstIndeces[rowIndex]; i < colIndex; i++){
-        updatedGameState[rowIndex][i] = this.state.activePlayer;
-        updatedGameStateTranspose[i][rowIndex] = this.state.activePlayer;
-       }
-     }
-
-     //For Columns: Change all tiles of the opposite color between the placed tile and the first occurance of the same player
-     if (firstIndecesTranspose[colIndex] !== -1){
-       //if the piece was placed above another..
-       for (let i = rowIndex; i < firstIndecesTranspose[colIndex]; i++){
-         updatedGameState[i][colIndex] = this.state.activePlayer;
-         updatedGameStateTranspose[colIndex][i] = this.state.activePlayer;
-       }
-       //if the piece was placed below another....
-       for (let i = firstIndecesTranspose[colIndex]; i < rowIndex; i++){
-        updatedGameState[i][colIndex] = this.state.activePlayer;
-        updatedGameStateTranspose[colIndex][i] = this.state.activePlayer;
-      }
-     }
-     */
-
+    // color downward
     let downExistance = [];
-    let i_d = rowIndex;
+    let i_d = rowIndex + 1;
     let j_d = colIndex;
     while (i_d <= 7){
-      downExistance.push(updatedGameState[i_d][j_d])
+      downExistance.push(this.state.gameState[i_d][j_d])
       i_d++;
     }
-    if (downExistance.indexOf(activePlayer) !== -1){
-     let i_d = rowIndex;
+   
+    let blankBelow = downExistance.indexOf(blank) !== -1 ? true : false
+    let availableBelow = downExistance.indexOf(available) !== -1 ? true : false
+    let blankBeforeCurrentPlayer_d = downExistance.indexOf(blank) < downExistance.indexOf(this.state.activePlayer) ? true : false
+    let availableBeforeCurrentPlayer_d = downExistance.indexOf(available) < downExistance.indexOf(this.state.activePlayer) ? true : false
+    if (blankBelow && blankBeforeCurrentPlayer_d){
+      downExistance = [];
+    }
+
+    if (downExistance.indexOf(this.state.activePlayer) !== -1){
+     let i_d = rowIndex + 1;
      let j_d = colIndex;
      let k_d = 0;
-     while (i_d <= 7 && downExistance[k_d] !== activePlayer){
-       updatedGameState[i_d][j_d] = activePlayer;
-       updatedGameStateTranspose[j_d][i_d] = activePlayer;
+     while (i_d <= 7 && downExistance[k_d] !== this.state.activePlayer && downExistance[k_d] === this.state.inactivePlayer ){
+       updatedGameState[i_d][j_d] = this.state.activePlayer;
+       updatedGameStateTranspose[j_d][i_d] = this.state.activePlayer;
        i_d++;
        k_d++;
      }
     }
 
 
+    // color upward
     let upExistance = [];
-    let i_u = rowIndex;
+    let i_u = rowIndex - 1 ;
     let j_u = colIndex;
     while (i_u >= 0){
       upExistance.push(this.state.gameState[i_u][j_u])
       i_u--;
     }
+    
+    let blankAbove = upExistance.indexOf(blank) !== -1 ? true : false
+    let availableAbove = upExistance.indexOf(available) !== -1 ? true : false
+    let blankBeforeCurrentPlayer_u = upExistance.indexOf(blank) < upExistance.indexOf(this.state.activePlayer) ? true : false
+    let availableBeforeCurrentPlayer_u = upExistance.indexOf(available) < upExistance.indexOf(this.state.activePlayer) ? true : false
+    if ( blankAbove && blankBeforeCurrentPlayer_u ){
+      upExistance = [];
+    }
+    if ( availableAbove && availableBeforeCurrentPlayer_u ){
+      upExistance = [];
+    }
+    
     if (upExistance.indexOf(this.state.activePlayer) !== -1){
-     let i_u = rowIndex;
+     let i_u = rowIndex - 1;
      let j_u = colIndex;
      let k_u = 0;
-     while (i_u >= 0 && upExistance[k_u] !== this.state.activePlayer){
+     while (i_u >= 0 && upExistance[k_u] !== this.state.activePlayer && upExistance[k_u] ===this.state.inactivePlayer){
        updatedGameState[i_u][j_u] = this.state.activePlayer;
        updatedGameStateTranspose[j_u][i_u] = this.state.activePlayer;
        i_u--;
@@ -267,19 +317,31 @@ class App extends React.Component{
      }
     }
 
-
+    //color to the left
     let leftExistance = [];
     let i_l = rowIndex;
-    let j_l = colIndex;
+    let j_l = colIndex - 1;
     while (j_l >= 0){
       leftExistance.push(this.state.gameState[i_l][j_l])
       j_l--;
     }
+
+    let blankLeft = leftExistance.indexOf(blank) !== -1 ? true : false
+    let availableLeft = leftExistance.indexOf(available) !== -1 ? true : false
+    let blankBeforeCurrentPlayer_l = leftExistance.indexOf(blank) < leftExistance.indexOf(this.state.activePlayer) ? true : false
+    let availableBeforeCurrentPlayer_l = leftExistance.indexOf(available) < leftExistance.indexOf(this.state.activePlayer) ? true : false
+    if ( blankLeft && blankBeforeCurrentPlayer_l ){
+      leftExistance = [];
+    }
+    if ( availableLeft && availableBeforeCurrentPlayer_l ){
+      leftExistance = [];
+    }
+
     if (leftExistance.indexOf(this.state.activePlayer) !== -1){
      let i_l = rowIndex;
-     let j_l = colIndex;
+     let j_l = colIndex - 1;
      let k_l = 0;
-     while (j_l >= 0 && leftExistance[k_l] !== this.state.activePlayer){
+     while (j_l >= 0 && leftExistance[k_l] !== this.state.activePlayer && leftExistance[k_l] === this.state.inactivePlayer){
        updatedGameState[i_l][j_l] = this.state.activePlayer;
        updatedGameStateTranspose[j_l][i_l] = this.state.activePlayer;
        j_l--;
@@ -287,19 +349,32 @@ class App extends React.Component{
      }
     }
 
-
+    // color to the right
      let rightExistance = [];
      let i_r = rowIndex;
-     let j_r = colIndex;
+     let j_r = colIndex + 1;
      while (j_r <= 7){
        rightExistance.push(this.state.gameState[i_r][j_r])
        j_r++;
      }
+
+     let blankRight = rightExistance.indexOf(blank) !== -1 ? true : false
+     let availableRight = rightExistance.indexOf(available) !== -1 ? true : false
+     let blankBeforeCurrentPlayer_r = rightExistance.indexOf(blank) < rightExistance.indexOf(this.state.activePlayer) ? true : false
+     let availableBeforeCurrentPlayer_r = rightExistance.indexOf(available) < rightExistance.indexOf(this.state.activePlayer) ? true : false
+     if ( blankRight && blankBeforeCurrentPlayer_r ){
+       rightExistance = [];
+     }
+     if ( availableRight && availableBeforeCurrentPlayer_r ){
+       rightExistance = [];
+     }
+
+
      if (rightExistance.indexOf(this.state.activePlayer) !== -1){
       let i_r = rowIndex;
-      let j_r = colIndex;
+      let j_r = colIndex + 1;
       let k_r = 0;
-      while (j_r <= 7 && rightExistance[k_r] !== this.state.activePlayer){
+      while (j_r <= 7 && rightExistance[k_r] !== this.state.activePlayer && rightExistance[k_r] === this.state.inactivePlayer){
         updatedGameState[i_r][j_r] = this.state.activePlayer;
         updatedGameStateTranspose[j_r][i_r] = this.state.activePlayer;
         j_r++;
@@ -309,18 +384,18 @@ class App extends React.Component{
 
      //check north west diagonal existance and color
      let nwDiagonalExistance = [];
-     let i_nwd = rowIndex;
-     let j_nwd = colIndex;
+     let i_nwd = rowIndex - 1;
+     let j_nwd = colIndex + 1;
      while (i_nwd >= 0 && j_nwd <= 7){
        nwDiagonalExistance.push(this.state.gameState[i_nwd][j_nwd]);
        i_nwd--;
        j_nwd++;
      }
      if (nwDiagonalExistance.indexOf(this.state.activePlayer) !== -1){
-      let i_nwd = rowIndex;
-      let j_nwd = colIndex;
+      let i_nwd = rowIndex - 1;
+      let j_nwd = colIndex + 1;
       let k_nwd = 0;
-      while (i_nwd >= 0 && j_nwd <= 7 && nwDiagonalExistance[k_nwd] !== this.state.activePlayer){
+      while (i_nwd >= 0 && j_nwd <= 7 && nwDiagonalExistance[k_nwd] !== this.state.activePlayer && nwDiagonalExistance[k_nwd] === this.state.inactivePlayer){
         updatedGameState[i_nwd][j_nwd] = this.state.activePlayer;
         updatedGameStateTranspose[j_nwd][i_nwd] = this.state.activePlayer;
         i_nwd--;
@@ -331,18 +406,18 @@ class App extends React.Component{
 
       //check north east diagonal existance and color
       let neDiagonalExistance = [];
-      let i_ned = rowIndex;
-      let j_ned = colIndex;
+      let i_ned = rowIndex - 1;
+      let j_ned = colIndex - 1; 
       while (i_ned >= 0 && j_ned >= 0){
         neDiagonalExistance.push(this.state.gameState[i_ned][j_ned]);
         i_ned--;
         j_ned--;
       }
       if (neDiagonalExistance.indexOf(this.state.activePlayer) !== -1){
-        let i_ned = rowIndex;
-        let j_ned = colIndex;
+        let i_ned = rowIndex - 1;
+        let j_ned = colIndex - 1;
         let k_ned = 0;
-        while (i_ned >= 0 && j_ned >= 0 && neDiagonalExistance[k_ned] !== this.state.activePlayer){
+        while (i_ned >= 0 && j_ned >= 0 && neDiagonalExistance[k_ned] !== this.state.activePlayer && neDiagonalExistance[k_ned] === this.state.inactivePlayer){
           updatedGameState[i_ned][j_ned] = this.state.activePlayer;
           updatedGameStateTranspose[j_ned][i_ned] = this.state.activePlayer;
           i_ned--;
@@ -353,44 +428,44 @@ class App extends React.Component{
     
       //check south east diagonal existance and color
       let seDiagonalExistance = [];
-      let i_sed = rowIndex;
-      let j_sed = colIndex;
-      while (i_sed <= 7 && j_sed >= 0){
-        seDiagonalExistance.push(updatedGameState[i_sed][j_sed]);
+      let i_sed = rowIndex + 1;
+      let j_sed = colIndex + 1;
+      while (i_sed <= 7 && j_sed <= 7){
+        seDiagonalExistance.push(this.state.gameState[i_sed][j_sed]);
         i_sed++;
-        j_sed--;
+        j_sed++;
       }
       if (seDiagonalExistance.indexOf(activePlayer) !== -1){
-        let i_sed = rowIndex;
-        let j_sed = colIndex;
+        let i_sed = rowIndex + 1;
+        let j_sed = colIndex + 1;
         let k_sed = 0;
-        while (i_sed <= 7 && j_sed >= 0 && seDiagonalExistance[k_sed] !== activePlayer){
+        while (i_sed <= 7 && j_sed <= 7 && seDiagonalExistance[k_sed] !== this.state.activePlayer && seDiagonalExistance[k_sed] === this.state.inactivePlayer){
           updatedGameState[i_sed][j_sed] = activePlayer;
           updatedGameStateTranspose[j_sed][i_sed] = activePlayer;
           i_sed++;
-          j_sed--;
+          j_sed++;
           k_sed++;
         }
       }
   
       //check south west diagonal existance and color
       let swDiagonalExistance = [];
-      let i_swd = rowIndex;
-      let j_swd = colIndex;
-      while (i_swd <= 7 && j_swd <= 7){
+      let i_swd = rowIndex + 1;
+      let j_swd = colIndex - 1;
+      while (i_swd <= 7 && j_swd >= 0){
         swDiagonalExistance.push(this.state.gameState[i_swd][j_swd]);
         i_swd++;
-        j_swd++;
+        j_swd--;
       }
       if (swDiagonalExistance.indexOf(this.state.activePlayer) !== -1){
-        let i_swd = rowIndex;
-        let j_swd = colIndex;
+        let i_swd = rowIndex + 1;
+        let j_swd = colIndex - 1;
         let k_swd = 0;
-        while (i_swd <= 7 && j_swd <= 7 && swDiagonalExistance[k_swd] !== this.state.activePlayer){
+        while (i_swd <= 7 && j_swd >= 0 && swDiagonalExistance[k_swd] !== this.state.activePlayer && swDiagonalExistance[k_swd] === this.state.inactivePlayer){
           updatedGameState[i_swd][j_swd] = this.state.activePlayer;
           updatedGameStateTranspose[j_swd][i_swd] = this.state.activePlayer;
           i_swd++;
-          j_swd++;
+          j_swd--;
           k_swd++;
         }
       }
@@ -402,8 +477,8 @@ class App extends React.Component{
 
 
      //Remove tiles that were previously labeled as available
-     updatedGameState = updatedGameState.map(i => i.map(j => j === 8 ? j = 0 : j))
-     updatedGameStateTranspose = updatedGameStateTranspose.map(i => i.map(j => j === 8 ? j = 0 : j))
+     updatedGameState = updatedGameState.map(i => i.map(j => j === available ? j = 0 : j))
+     updatedGameStateTranspose = updatedGameStateTranspose.map(i => i.map(j => j === available ? j = 0 : j))
 
      //Determine valid tiles surrounding the current player (currently excluding edge cases)
      updatedGameState = updatedGameState.map((i, index_i) => {
