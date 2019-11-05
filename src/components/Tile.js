@@ -11,8 +11,7 @@ class Tile extends React.Component{
 
     handleClick(){
         if (this.props.tileValue === 8){
-            this.props.handleGameState(this.props.rowIndex, this.props.colIndex);
-    
+            this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
         }
     }
 
