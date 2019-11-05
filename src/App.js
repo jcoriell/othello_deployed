@@ -1,6 +1,18 @@
+/*
+Joshua Coriell
+Tuesday, Novemeber 12
+CWID: 101-75-228
+Assignment #3 - Othello
+
+Description:
+This program implements Othello. You can play with two humans, or a human can play against an AI.
+*/
+
+
+
 import React from 'react';
 import './App.css';
-import { Row, Container, Col } from 'react-bootstrap';
+import { Row, Container } from 'react-bootstrap';
 import Tile from './components/Tile';
 
 const black = 1;
@@ -32,7 +44,9 @@ class App extends React.Component{
       activePlayer : 1,
       inactivePlayer : 2,
       blackPoints: 2,
-      whitePoints: 2
+      whitePoints: 2,
+      availablePoints: 4,
+      gameMode: 'menu'
     }
     this.setPlayer = this.setPlayer.bind(this);
     this.handleGameState = this.handleGameState.bind(this);
@@ -45,18 +59,34 @@ class App extends React.Component{
     this.checkSouthEast = this.checkSouthEast.bind(this);
     this.checkSouthWest = this.checkSouthWest.bind(this);
     this.updateScore = this.updateScore.bind(this);
+    this.handleGameMode = this.handleGameMode.bind(this);
   }
 
-  updateScore(){
+  handleGameMode(mode){
+    this.setState({gameMode: mode})
+  }
+
+  updateScore(array){
     let blackScore = 0;
     let whiteScore = 0;
+    let availableSpots = 0;
     for (let i = 0; i < this.state.gameState.length; i++){
       for (let j = 0; j < this.state.gameState[i].length; j++){
         if (this.state.gameState[i][j] === black){blackScore++;}
         if (this.state.gameState[i][j] === white){whiteScore++;}
       }
     }
-    this.setState({blackPoints: blackScore, whitePoints: whiteScore})
+    for (let i = 0; i < array.length; i++){
+      for (let j = 0; j < array[i].length; j++){
+        if (array[i][j] === available){availableSpots++}
+      }
+    }
+    this.setState({blackPoints: blackScore, whitePoints: whiteScore, availablePoints: availableSpots})
+    
+    
+    if (blackScore + whiteScore === 64 || availableSpots === 0){
+      this.handleGameMode('gameover')
+    }
   }
 
   checkTileOnRight(rowIndex, colIndex){
@@ -603,8 +633,9 @@ class App extends React.Component{
 
      //Update the app state
      this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
+     this.updateScore(updatedGameState);
      this.setPlayer();
-     this.updateScore();
+     
   }
   
 
@@ -630,32 +661,38 @@ class App extends React.Component{
         </Row>
       )
     })
+
+    let gameMode = (this.state.gameMode === 'menu' ? 
+                    <Container>
+                        <h3>Choose A Mode:</h3>
+                        <button onClick={this.handleGameMode.bind(this, '2playergame')}>Human v. Human</button>
+                        <button>Human v. AI</button>
+                    </Container> :
+                    <Container>
+                      <div className = 'gameboard'>
+                        {updateBoard}
+                      </div>
+                      <h4>{this.state.activePlayer === black ? 'Black' : 'White'}'s Turn</h4> 
+                      <div>
+                        <h5>Score for Black:</h5>
+                        <p>{this.state.blackPoints}</p>
+                      </div>
+                      <div>
+                        <h5>Score for White:</h5>
+                        <p>{this.state.whitePoints}</p>
+                      </div>
+                      <div>
+                        {this.state.gameMode === 'gameover' ? <h6>Game Over - {this.state.blackPoints === this.state.whitePoints ? 'Tie Game' : 
+                                                                              (this.state.blackPoints > this.state.whitePoints ? 'Black Wins' : 'White Wins')} </h6> :  null}
+                      </div>
+                      <div>{this.state.availablePoints}</div>
+                    </Container> 
+                      )
+          
   
     return(
       <React.Fragment>
-      <Container>
-        <div className = 'gameboard'>
-          {updateBoard}
-        </div>
-        <div>Player {this.state.activePlayer}'s Turn</div> 
-        <div>
-          <h5>Score for Black:</h5>
-          <p>{this.state.blackPoints}</p>
-        </div>
-        <div>
-          <h5>Score for White:</h5>
-          <p>{this.state.whitePoints}</p>
-        </div>
-        
-      </Container>
-      <div style = {{display: 'inline-block', margin: '4em'}}>
-      <h5>GameState</h5>
-      {this.state.gameState.map(i => <div style={{display: 'block'}}>{i.map(j => <div style = {{display: 'inline-block', margin: '2px', width: '20px'}}>{j}</div>)}</div>)}
-      </div>
-      <div style = {{display: 'inline-block', margin: '4em'}}>
-      <h5>GameStateTranspose</h5>
-      {this.state.gameStateTranspose.map(i => <div style={{display: 'block'}}>{i.map(j => <div style = {{display: 'inline-block', margin: '2px', width: '20px'}}>{j}</div>)}</div>)}
-      </div>
+        {gameMode}
       </React.Fragment>
     )
   }
