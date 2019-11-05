@@ -30,7 +30,9 @@ class App extends React.Component{
                             [0,0,0,0,0,0,0,0],
                             [0,0,0,0,0,0,0,0],],
       activePlayer : 1,
-      inactivePlayer : 2
+      inactivePlayer : 2,
+      blackPoints: 2,
+      whitePoints: 2
     }
     this.setPlayer = this.setPlayer.bind(this);
     this.handleGameState = this.handleGameState.bind(this);
@@ -42,6 +44,19 @@ class App extends React.Component{
     this.checkNorthWest = this.checkNorthWest.bind(this);
     this.checkSouthEast = this.checkSouthEast.bind(this);
     this.checkSouthWest = this.checkSouthWest.bind(this);
+    this.updateScore = this.updateScore.bind(this);
+  }
+
+  updateScore(){
+    let blackScore = 0;
+    let whiteScore = 0;
+    for (let i = 0; i < this.state.gameState.length; i++){
+      for (let j = 0; j < this.state.gameState[i].length; j++){
+        if (this.state.gameState[i][j] === black){blackScore++;}
+        if (this.state.gameState[i][j] === white){whiteScore++;}
+      }
+    }
+    this.setState({blackPoints: blackScore, whitePoints: whiteScore})
   }
 
   checkTileOnRight(rowIndex, colIndex){
@@ -49,22 +64,25 @@ class App extends React.Component{
     if (colIndex === 7){return false}
     // if you're not on the edge, see if the tile on the right is the same color as the person who just played and if the upcoming player has a piece in this row, return true.
     else {
-      let firstInactivePlayerIndex = this.state.gameState[rowIndex].indexOf(this.state.inactivePlayer)
-      let inactivePlayerExistsInRow = firstInactivePlayerIndex !== -1 ? true : false
-      let tileOnRight = this.state.gameState[rowIndex][colIndex + 1]
-      let tilesBetweenMeAndFirstInactivePlayer;
-      if (firstInactivePlayerIndex === -1){return false}
-      else if (firstInactivePlayerIndex > colIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(colIndex + 1, firstInactivePlayerIndex)
+      let tilesOnRightFromMeToRight = [];
+      let i = rowIndex;
+      let j = colIndex + 1;
+      while (j <= 7){
+        let result;
+        if (this.state.gameState[i][j] === available){result = blank}
+        else{result = this.state.gameState[i][j]}
+        tilesOnRightFromMeToRight.push(result);
+        j++;
       } 
-      else if (firstInactivePlayerIndex < colIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(firstInactivePlayerIndex, colIndex)
-      }
-      let noBlankTilesBetween = tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1 ? true : false 
-      
-      if (tileOnRight === this.state.activePlayer && inactivePlayerExistsInRow && noBlankTilesBetween)
-      {
-      return true
+      let tileOnRightIsActivePlayer = (tilesOnRightFromMeToRight[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesOnRightFromMeToRight.indexOf(this.state.inactivePlayer)
+      if (firstInactivePlayerIndex === -1){return false}
+      let firstBlankIndex = tilesOnRightFromMeToRight.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      let inactivePlayerExistsInTilesOnRight = (firstInactivePlayerIndex !== -1 ? true : false)
+      if (tileOnRightIsActivePlayer && inactivePlayerExistsInTilesOnRight && inactivePlayerComesBeforeBlank){
+        return true
       }
       else{return false}
 
@@ -75,23 +93,28 @@ class App extends React.Component{
     // if you're on the edge, don't check the previous tile.
     if (colIndex === 0){return false}
     else{
-      let firstInactivePlayerIndex = this.state.gameState[rowIndex].indexOf(this.state.inactivePlayer)
-      let inactivePlayerExistsInRow = firstInactivePlayerIndex !== -1 ? true : false
-      let tileOnLeft = this.state.gameState[rowIndex][colIndex - 1]
-      let tilesBetweenMeAndFirstInactivePlayer;
-      if (firstInactivePlayerIndex === -1 ){return false}
-      else if( firstInactivePlayerIndex > colIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(colIndex, firstInactivePlayerIndex)
-      }
-      else if( firstInactivePlayerIndex < colIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameState[rowIndex].slice(firstInactivePlayerIndex, colIndex)
-      }
-      let noBlankTilesBetween = tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1 ? true : false
-      // if you're not on the edge, see if the tile on the left is the same color as the person who just played and if the upcoming player has a piece in this row, return true.
-      if (tileOnLeft === this.state.activePlayer && inactivePlayerExistsInRow && noBlankTilesBetween){
+      let tilesOnLeftFromMeToLeft = [];
+      let i = rowIndex;
+      let j = colIndex - 1;
+      while (j >= 0){
+        let result;
+        if (this.state.gameState[i][j] === available){result = blank}
+        else{result = this.state.gameState[i][j]}
+        tilesOnLeftFromMeToLeft.push(result);
+        j--;
+      } 
+      let tileOnLeftIsActivePlayer = (tilesOnLeftFromMeToLeft[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesOnLeftFromMeToLeft.indexOf(this.state.inactivePlayer)
+      if (firstInactivePlayerIndex === -1){return false}
+      let firstBlankIndex = tilesOnLeftFromMeToLeft.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      let inactivePlayerExistsInTilesOnLeft = (firstInactivePlayerIndex !== -1 ? true : false)
+      if (tileOnLeftIsActivePlayer && inactivePlayerExistsInTilesOnLeft && inactivePlayerComesBeforeBlank){
         return true
       }
-      else {return false}
+      else{return false}
+
     }
  
   
@@ -101,22 +124,20 @@ class App extends React.Component{
     // if you're on the edge, don't check above.
     if (rowIndex === 0){return false}
     else{
-      let firstInactivePlayerIndex = this.state.gameStateTranspose[colIndex].indexOf(this.state.inactivePlayer)
-      let inactivePlayerExistsInColumn= firstInactivePlayerIndex !== -1 ? true : false
-      let tileAbove = this.state.gameState[rowIndex - 1][colIndex]
-      let tilesBetweenMeAndFirstInactivePlayer;
-      if (firstInactivePlayerIndex === -1) {return false}
-      else if (firstInactivePlayerIndex > rowIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(rowIndex, firstInactivePlayerIndex)
-      }
-      else if (firstInactivePlayerIndex < rowIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(firstInactivePlayerIndex, rowIndex)
-      }
-      let noBlankTilesBetween = (tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1)? true : false
-      if (tileAbove === this.state.activePlayer && inactivePlayerExistsInColumn && noBlankTilesBetween){
+      let tilesAboveFromMeToTop = this.state.gameStateTranspose[colIndex].slice(0, rowIndex).reverse()  //creates an array of the tile on the right of the current one.
+      let tileAboveIsActivePlayer = (tilesAboveFromMeToTop[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesAboveFromMeToTop.indexOf(this.state.inactivePlayer)
+      let firstBlankIndex = tilesAboveFromMeToTop.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      if (firstInactivePlayerIndex === -1){return false}
+      let inactivePlayerExistsInTilesAbove = (firstInactivePlayerIndex !== -1 ? true : false)
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      if (tileAboveIsActivePlayer && inactivePlayerExistsInTilesAbove && inactivePlayerComesBeforeBlank){
         return true
       }
-      else {return false}
+      else{return false}
+
+
     }
   }
 
@@ -124,117 +145,138 @@ class App extends React.Component{
     // if you're on the edge, don't check above.
     if (rowIndex === 7){return false}
     else{
-      let firstInactivePlayerIndex = this.state.gameStateTranspose[colIndex].indexOf(this.state.inactivePlayer)
-      let inactivePlayerExistsInColumn= firstInactivePlayerIndex !== -1 ? true : false
-      let tileBelow = this.state.gameState[rowIndex + 1][colIndex]
-      let tilesBetweenMeAndFirstInactivePlayer;
-      if (firstInactivePlayerIndex === -1) {return false}
-      else if (firstInactivePlayerIndex > rowIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(rowIndex + 1, firstInactivePlayerIndex)
-      }
-      else if (firstInactivePlayerIndex < rowIndex){
-        tilesBetweenMeAndFirstInactivePlayer = this.state.gameStateTranspose[colIndex].slice(firstInactivePlayerIndex, rowIndex)
-      }
-      let noBlankTilesBetween = (tilesBetweenMeAndFirstInactivePlayer.indexOf(blank) === -1)? true : false
-      if (tileBelow === this.state.activePlayer && inactivePlayerExistsInColumn && noBlankTilesBetween){
+      let tilesBelowFromMeToBottom = this.state.gameStateTranspose[colIndex].slice(rowIndex + 1)
+      let tileBelowIsActivePlayer = (tilesBelowFromMeToBottom[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesBelowFromMeToBottom.indexOf(this.state.inactivePlayer)
+      let firstBlankIndex = tilesBelowFromMeToBottom.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      if (firstInactivePlayerIndex === -1){return false}
+      let inactivePlayerExistsInTilesBelow = (firstInactivePlayerIndex !== -1 ? true : false)
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      if (tileBelowIsActivePlayer && inactivePlayerExistsInTilesBelow && inactivePlayerComesBeforeBlank){
         return true
       }
-      else {return false}
+      else{return false}
+      
     }
   }
 
 
   checkNorthEast(rowIndex, colIndex){
     if (rowIndex ===  0 || colIndex === 7){return false}
-    else if (this.state.gameState[rowIndex - 1][colIndex + 1] === this.state.activePlayer){
-      let existance = [];
-      let j = colIndex;
-      let i = rowIndex;
+    else{
+      let tilesFromMeToNorthEast = [];
+      let i = rowIndex - 1;
+      let j = colIndex + 1;
       while (i >= 0 && j <= 7){
-        existance.push(this.state.gameState[i][j])  
-        j++;
+        let result;
+        if (this.state.gameState[i][j] === available){result = blank}
+        else{result = this.state.gameState[i][j]}
+        tilesFromMeToNorthEast.push(result);
         i--;
+        j++;
       }
-      if (existance.indexOf(this.state.inactivePlayer) !== -1){
+      let tileNorthEastIsActivePlayer = (tilesFromMeToNorthEast[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesFromMeToNorthEast.indexOf(this.state.inactivePlayer)
+      let firstBlankIndex = tilesFromMeToNorthEast.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      if (firstInactivePlayerIndex === -1){return false}
+      let inactivePlayerExistsInNorthEastTiles = (firstInactivePlayerIndex !== -1 ? true : false)
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      if (tileNorthEastIsActivePlayer && inactivePlayerExistsInNorthEastTiles && inactivePlayerComesBeforeBlank){
         return true
       }
-      else{
-        return false
-      }
+      else{return false}
     }
-    else {
-      return false
-    }
+
   }
 
 
   checkNorthWest(rowIndex, colIndex){
     if (rowIndex ===  0 || colIndex === 0){return false}
-    else if (this.state.gameState[rowIndex - 1][colIndex - 1] === this.state.activePlayer){
-      let existance = [];
-      let j = colIndex;
-      let i = rowIndex;
+    else{
+      let tilesFromMeToNorthWest = [];
+      let i = rowIndex - 1;
+      let j = colIndex - 1;
       while (i >= 0 && j >= 0){
-        existance.push(this.state.gameState[i][j])  
-        j--;
+        let result;
+        if (this.state.gameState[i][j] === available){result = blank}
+        else{result = this.state.gameState[i][j]}
+        tilesFromMeToNorthWest.push(result);
         i--;
+        j--;
       }
-      if (existance.indexOf(this.state.inactivePlayer) !== -1){
+      let tileNorthWestIsActivePlayer = (tilesFromMeToNorthWest[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesFromMeToNorthWest.indexOf(this.state.inactivePlayer)
+      let firstBlankIndex = tilesFromMeToNorthWest.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      if (firstInactivePlayerIndex === -1){return false}
+      let inactivePlayerExistsInNorthWestTiles = (firstInactivePlayerIndex !== -1 ? true : false)
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      if (tileNorthWestIsActivePlayer && inactivePlayerExistsInNorthWestTiles && inactivePlayerComesBeforeBlank){
         return true
       }
-      else{
-        return false
-      }
+      else{return false}
     }
-    else {
-      return false
-    }
+
   }
 
   checkSouthEast(rowIndex, colIndex){
     if (rowIndex ===  7 || colIndex === 7){return false}
-    else if (this.state.gameState[rowIndex + 1][colIndex + 1] === this.state.activePlayer){
-      let existance = [];
-      let j = colIndex;
-      let i = rowIndex;
+    else{
+      let tilesFromMeToSouthEast = [];
+      let i = rowIndex + 1;
+      let j = colIndex + 1;
       while (i <= 7 && j <= 7){
-        existance.push(this.state.gameState[i][j])  
-        j++;
+        let result;
+        if (this.state.gameState[i][j] === available){result = blank}
+        else{result = this.state.gameState[i][j]}
+        tilesFromMeToSouthEast.push(result);
         i++;
+        j++;
       }
-      if (existance.indexOf(this.state.inactivePlayer) !== -1){
+      let tileSouthEastIsActivePlayer = (tilesFromMeToSouthEast[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesFromMeToSouthEast.indexOf(this.state.inactivePlayer)
+      let firstBlankIndex = tilesFromMeToSouthEast.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      if (firstInactivePlayerIndex === -1){return false}
+      let inactivePlayerExistsInSouthEastTiles = (firstInactivePlayerIndex !== -1 ? true : false)
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      if (tileSouthEastIsActivePlayer && inactivePlayerExistsInSouthEastTiles && inactivePlayerComesBeforeBlank){
         return true
       }
-      else{
-        return false
-      }
+      else{return false}
     }
-    else {
-      return false
-    }
+
   }
 
   checkSouthWest(rowIndex, colIndex){
     if (rowIndex ===  7 || colIndex === 0){return false}
-    else if (this.state.gameState[rowIndex + 1][colIndex - 1] === this.state.activePlayer){
-      let existance = [];
-      let j = colIndex;
-      let i = rowIndex;
+    else{
+      let tilesFromMeToSouthWest = [];
+      let i = rowIndex + 1;
+      let j = colIndex - 1;
       while (i <= 7 && j >= 0){
-        existance.push(this.state.gameState[i][j])  
-        j--;
+        let result;
+        if (this.state.gameState[i][j] === available){result = blank}
+        else{result = this.state.gameState[i][j]}
+        tilesFromMeToSouthWest.push(result);
         i++;
+        j--;
       }
-      if (existance.indexOf(this.state.inactivePlayer) !== -1){
+      let tileSouthWestIsActivePlayer = (tilesFromMeToSouthWest[0] === this.state.activePlayer ? true : false)
+      let firstInactivePlayerIndex = tilesFromMeToSouthWest.indexOf(this.state.inactivePlayer)
+      let firstBlankIndex = tilesFromMeToSouthWest.indexOf(blank)
+      if (firstBlankIndex === -1 ){firstBlankIndex = 20}
+      if (firstInactivePlayerIndex === -1){return false}
+      let inactivePlayerExistsInSouthWestTiles = (firstInactivePlayerIndex !== -1 ? true : false)
+      let inactivePlayerComesBeforeBlank = (firstInactivePlayerIndex < firstBlankIndex ? true : false)
+      if (tileSouthWestIsActivePlayer && inactivePlayerExistsInSouthWestTiles && inactivePlayerComesBeforeBlank){
         return true
       }
-      else{
-        return false
-      }
+      else{return false}
     }
-    else {
-      return false
-    }
+ 
   }
 
 
@@ -269,6 +311,9 @@ class App extends React.Component{
     let blankBeforeCurrentPlayer_d = downExistance.indexOf(blank) < downExistance.indexOf(this.state.activePlayer) ? true : false
     let availableBeforeCurrentPlayer_d = downExistance.indexOf(available) < downExistance.indexOf(this.state.activePlayer) ? true : false
     if (blankBelow && blankBeforeCurrentPlayer_d){
+      downExistance = [];
+    }
+    if ( availableBelow && availableBeforeCurrentPlayer_d ){
       downExistance = [];
     }
 
@@ -391,6 +436,19 @@ class App extends React.Component{
        i_nwd--;
        j_nwd++;
      }
+
+     let blankNW = nwDiagonalExistance.indexOf(blank) !== -1 ? true : false
+     let availableNW = nwDiagonalExistance.indexOf(available) !== -1 ? true : false
+     let blankBeforeCurrentPlayer_nw = nwDiagonalExistance.indexOf(blank) < nwDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+     let availableBeforeCurrentPlayer_nw = nwDiagonalExistance.indexOf(available) < nwDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+     if ( blankNW && blankBeforeCurrentPlayer_nw ){
+       nwDiagonalExistance = [];
+     }
+     if ( availableNW && availableBeforeCurrentPlayer_nw ){
+       nwDiagonalExistance = [];
+     }
+
+
      if (nwDiagonalExistance.indexOf(this.state.activePlayer) !== -1){
       let i_nwd = rowIndex - 1;
       let j_nwd = colIndex + 1;
@@ -413,6 +471,19 @@ class App extends React.Component{
         i_ned--;
         j_ned--;
       }
+
+      let blankNE = neDiagonalExistance.indexOf(blank) !== -1 ? true : false
+      let availableNE = neDiagonalExistance.indexOf(available) !== -1 ? true : false
+      let blankBeforeCurrentPlayer_ne = neDiagonalExistance.indexOf(blank) < neDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+      let availableBeforeCurrentPlayer_ne = neDiagonalExistance.indexOf(available) < neDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+      if ( blankNE && blankBeforeCurrentPlayer_ne ){
+        neDiagonalExistance = [];
+      }
+      if ( availableNE && availableBeforeCurrentPlayer_ne ){
+        neDiagonalExistance = [];
+      }
+
+
       if (neDiagonalExistance.indexOf(this.state.activePlayer) !== -1){
         let i_ned = rowIndex - 1;
         let j_ned = colIndex - 1;
@@ -435,6 +506,20 @@ class App extends React.Component{
         i_sed++;
         j_sed++;
       }
+
+
+      let blankSE = seDiagonalExistance.indexOf(blank) !== -1 ? true : false
+      let availableSE = seDiagonalExistance.indexOf(available) !== -1 ? true : false
+      let blankBeforeCurrentPlayer_se = seDiagonalExistance.indexOf(blank) < seDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+      let availableBeforeCurrentPlayer_se = seDiagonalExistance.indexOf(available) < seDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+      if ( blankSE && blankBeforeCurrentPlayer_se ){
+        seDiagonalExistance = [];
+      }
+      if ( availableSE && availableBeforeCurrentPlayer_se ){
+        seDiagonalExistance = [];
+      }
+
+
       if (seDiagonalExistance.indexOf(activePlayer) !== -1){
         let i_sed = rowIndex + 1;
         let j_sed = colIndex + 1;
@@ -457,6 +542,20 @@ class App extends React.Component{
         i_swd++;
         j_swd--;
       }
+
+
+      let blankSW = swDiagonalExistance.indexOf(blank) !== -1 ? true : false
+      let availableSW = swDiagonalExistance.indexOf(available) !== -1 ? true : false
+      let blankBeforeCurrentPlayer_sw = swDiagonalExistance.indexOf(blank) < swDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+      let availableBeforeCurrentPlayer_sw = swDiagonalExistance.indexOf(available) < swDiagonalExistance.indexOf(this.state.activePlayer) ? true : false
+      if ( blankSW && blankBeforeCurrentPlayer_sw ){
+        swDiagonalExistance = [];
+      }
+      if ( availableSW && availableBeforeCurrentPlayer_sw ){
+        swDiagonalExistance = [];
+      }
+
+
       if (swDiagonalExistance.indexOf(this.state.activePlayer) !== -1){
         let i_swd = rowIndex + 1;
         let j_swd = colIndex - 1;
@@ -480,13 +579,15 @@ class App extends React.Component{
      updatedGameState = updatedGameState.map(i => i.map(j => j === available ? j = 0 : j))
      updatedGameStateTranspose = updatedGameStateTranspose.map(i => i.map(j => j === available ? j = 0 : j))
 
+     //Update the app state
+     this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
      //Determine valid tiles surrounding the current player (currently excluding edge cases)
      updatedGameState = updatedGameState.map((i, index_i) => {
        return(
           i.map((j, index_j) => {
             
             return(
-              j === 0 && 
+              (j === blank || j === available) &&
               ( this.checkTileOnRight(index_i, index_j) || this.checkTileOnLeft(index_i, index_j) || 
                this.checkTileAbove(index_i, index_j) || this.checkTileBelow(index_i, index_j) || 
                this.checkNorthEast(index_i, index_j) || this.checkNorthWest(index_i, index_j) ||
@@ -503,6 +604,7 @@ class App extends React.Component{
      //Update the app state
      this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
      this.setPlayer();
+     this.updateScore();
   }
   
 
@@ -536,6 +638,15 @@ class App extends React.Component{
           {updateBoard}
         </div>
         <div>Player {this.state.activePlayer}'s Turn</div> 
+        <div>
+          <h5>Score for Black:</h5>
+          <p>{this.state.blackPoints}</p>
+        </div>
+        <div>
+          <h5>Score for White:</h5>
+          <p>{this.state.whitePoints}</p>
+        </div>
+        
       </Container>
       <div style = {{display: 'inline-block', margin: '4em'}}>
       <h5>GameState</h5>
