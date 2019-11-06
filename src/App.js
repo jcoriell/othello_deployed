@@ -61,27 +61,18 @@ class App extends React.Component{
     this.updateScore = this.updateScore.bind(this);
     this.handleGameMode = this.handleGameMode.bind(this);
     this.handleAI = this.handleAI.bind(this);
+    this.checkForWin = this.checkForWin.bind(this);
+    this.bestPlay = this.bestPlay.bind(this);
+    this.minimax = this.minimax.bind(this);
+    this.updateState = this.updateState.bind(this);
+    this.createGameBoard = this.createGameBoard.bind(this);
   }
 
   handleAI(gameState, gameStateTranspose){
     console.log('ai has been handled')
-    let inputRow;
-    let inputCol;
-    loop:
-    for (let i = 0; i < gameState.length; i++){
-      for (let j = 0; j < gameState[i].length; j++){
-        if(gameState[i][j] === available){
-          inputRow = i;
-          inputCol = j;
-          console.log('found available at (Row = ' + inputRow + ', Col = ' + inputCol)
-          setTimeout(this.handleGameState(inputRow, inputCol, white, gameState, gameStateTranspose), 3000)
-          clearTimeout()
-          break loop;
-        }
-      }
-    }
-    
-    
+    let coordinates = this.bestPlay(gameState, gameStateTranspose)
+    let newGameState = this.handleGameState(coordinates.row, coordinates.col, white, gameState, gameStateTranspose)
+    this.updateState(newGameState.gameState, newGameState.gameStateTranspose, white)
   }
 
   handleGameMode(mode){
@@ -96,19 +87,127 @@ class App extends React.Component{
       for (let j = 0; j < gameState[i].length; j++){
         if (gameState[i][j] === black){blackScore++;}
         if (gameState[i][j] === white){whiteScore++;}
-      }
-    }
-    for (let i = 0; i < gameState.length; i++){
-      for (let j = 0; j < gameState[i].length; j++){
         if (gameState[i][j] === available){availableSpots++}
       }
     }
-    this.setState({blackPoints: blackScore, whitePoints: whiteScore, availablePoints: availableSpots})
+
+
+    let result = {blackPoints: blackScore, whitePoints: whiteScore, availablePoints: availableSpots}
+    return result
+  }
+
+  checkForWin(blackScore, whiteScore, availableSpots){
+      let winning = null;
+        if (blackScore > whiteScore){
+          winning = 'Black';
+        }
+        if (whiteScore > blackScore){
+          winning = 'White';
+        }
+        if (blackScore === whiteScore){
+          winning = 'tie';
+        }
+        if (blackScore + whiteScore === 64 || availableSpots === 0){
+          this.handleGameMode('gameover')
+        }
+      return winning;
+  }
+
+  bestPlay(gameState){
     
-    
-    if (blackScore + whiteScore === 64 || availableSpots === 0){
-      this.handleGameMode('gameover')
+    let inputRow;
+    let inputCol;
+    loop:
+    for (let i = 0; i < gameState.length; i++){
+      for (let j = 0; j < gameState[i].length; j++){
+        if(gameState[i][j] === available){
+          inputRow = i;
+          inputCol = j;
+          console.log('Best Play was at (Row = ' + inputRow + ', Col = ' + inputCol +')')
+          break loop;
+        }
+      }
     }
+    
+    let coordinates = {row: inputRow, col: inputCol};
+    return coordinates;
+    
+    //return this.minimax(gameState, player, depth)
+  }
+
+  minimax(newGameState, newGameStateTranspose, player, depth){
+    // find the row and column of available spots to play in the incoming gamestate
+    let availables = []
+    for (let i = 0; i < newGameState.length; i++){
+      for (let j = 0; j < newGameState[i].length; j++){
+        if (newGameState[i][j] === available){
+          availables.push({row: i, col: j})
+        }
+      }
+    }
+
+    // check if you are at max depth.
+    let maxdepth = 2
+    if (depth === maxdepth){
+      // if you are at max depth and black is winning, return a large negative value
+        if(newGameState.scoreOfState.blackPoints > newGameState.scoreOfState.whitePoints){
+          return -10;
+        }
+        // if you are at max depth and white is winning, return a large positive value
+        else if (newGameState.scoreOfState.blackPoints < newGameState.scoreOfState.whitePoints){
+          return 10;
+        }
+        // if you are at max depth and it is a tie, return a zero.
+        else if( newGameState.scoreOfState.blackPoints === newGameState.scoreOfState.blackPoints){
+          return 0;
+        }
+    }
+    
+    // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
+    let moveScores = [];
+    // start a loop that runs through the available spots to play.
+    for (let i = 0; i < availables.length; i++){
+        // at the beginning of the loop, create an object that stores the row of the move, the col of the move, and the score that results from that move.
+        let move = {};
+        // set the row of the move object to row of the ith item in the array of available spots to play
+        // set the col of the move object to the col of the ith item in the array of available spots ot play
+        move.tileValue = newGameState[availables[i].row][availables[i].col];
+        // then set the newGameState's row and column to the player's color (black or white).
+              // it'll also need to do all the coloring, determine available spaces, etc.
+        let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
+
+    }
+        
+        
+        
+        
+              
+        // if the player is the white player, 
+            //then store the result of calling minimax on the newGameState with the black player and one more level of depth
+            //also set the score of the move object to the score of the result of calling that minimax algorithm
+        // else, 
+            //then store the result of calling minimax on the newGameState with the white player and one more level of depth
+            //also set the score of the move object to the score of the result of calling that minimax algorithm
+        
+        // now set newGameState[available_row[i]][avaialble_col[i]] = the index of the move item.
+        // moves.push(move) will add the score to the moves array for this iteration.
+    
+    // determine the best move to make.
+    // create a variable called bestMove
+    // if the player is white:
+        // create a variable called bestScore and set it to a really low number (-10000)
+        // loop through the moves array (all the scores). 
+            // if the score of the ith item is larger than the bestScore variable:
+                // set bestScore to the score of that move.
+                // set bestMove = index of moves array
+    // if the player is black, chose the lowest score.
+        // create a variable called bestScore and set it to a really large number (10000)
+            // loop through the moves array (all the scores). 
+                // if the score of the ith item is less than the bestScore variable:
+                    // set bestScore to the score of that move.
+                    // set bestMove = index of moves array
+    
+    // return the best moves (i.e. moves[bestMove])
   }
 
   checkTileOnRight(rowIndex, colIndex, activePlayer){
@@ -663,46 +762,58 @@ class App extends React.Component{
           updatedGameStateTranspose[i][j] = updatedGameState[j][i];
         }
       }
+    
+     let scoreOfState = this.updateScore(gameState)
+     let result = {gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose, activePlayer: activePlayer, scoreOfState: scoreOfState};
+  
 
+     return result
+  }
 
+  updateState(updatedGameState, updatedGameStateTranspose, activePlayer){
+    let newScore = this.updateScore(updatedGameState)
+    this.checkForWin(newScore.blackPoints, newScore.whitePoints, newScore.availablePoints)
+    this.setState({gameState: updatedGameState, 
+                   gameStateTranspose: updatedGameStateTranspose,
+                   blackPoints: newScore.blackPoints,
+                   whitePoints: newScore.whitePoints,
+                   availablePoints: newScore.availablePoints})
+    this.setPlayer(activePlayer);
+  }
 
-     //Update the app state
-     this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
-     this.updateScore(updatedGameState);
-     this.setPlayer(activePlayer);
+  createGameBoard(gameState){
+    let result = gameState.map((i, rowIndex) => {
+    
+      return(
+          <Row key = {rowIndex}>
+            {i.map((j, colIndex) => {
+              return(
+                <Tile 
+                  key = {colIndex}
+                  tileValue = {j} 
+                  handleGameState = {this.handleGameState}
+                  rowIndex = {rowIndex} 
+                  colIndex = {colIndex} 
+                  activePlayer = {this.state.activePlayer}
+                  handleAI = {this.handleAI}
+                  gameMode = {this.state.gameMode}
+                  gameState = {this.state.gameState}
+                  gameStateTranspose = {this.state.gameStateTranspose}
+                  updateState = {this.updateState}
+              
+                  />
+              )
+              })
+            }
+          </Row>
+        )
+      })
 
-     
+      return result
   }
   
 
   render(){
-    //create a row for each row in the gameState. Map each item in each row of the gameState to a tile.    
-    let updateBoard = this.state.gameState.map((i, rowIndex) => {
-    
-    return(
-        <Row key = {rowIndex}>
-          {i.map((j, colIndex) => {
-            return(
-              <Tile 
-                key = {colIndex}
-                tileValue = {j} 
-                handleGameState = {this.handleGameState}
-                rowIndex = {rowIndex} 
-                colIndex = {colIndex} 
-                activePlayer = {this.state.activePlayer}
-                handleAI = {this.handleAI}
-                gameMode = {this.state.gameMode}
-                gameState = {this.state.gameState}
-                gameStateTranspose = {this.state.gameStateTranspose}
-            
-                />
-            )
-            })
-          }
-        </Row>
-      )
-    })
-
     let gameMode = (this.state.gameMode === 'menu' ? 
                     <Container>
                         <h3>Choose A Mode:</h3>
@@ -710,10 +821,9 @@ class App extends React.Component{
                         <button onClick={this.handleGameMode.bind(this, 'aigame')}>Human v. AI</button>
                     </Container> :
                     <Container>
-                      <div className = 'gameboard' 
-                          onTransitionEnd = {this.state.activePlayer === white && this.state.gameMode === 'aigame' ? 
-                          this.handleAI.bind(this, this.state.gameState, this.state.gameStateTranspose) : null}>
-                        {updateBoard}
+                      <div className = 'gameboard'
+                         >
+                        {this.createGameBoard(this.state.gameState)}
                       </div>
                       <h4>{this.state.activePlayer === black ? 'Black' : 'White'}'s Turn</h4> 
                       <div>
