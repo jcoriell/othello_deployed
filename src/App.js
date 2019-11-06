@@ -65,7 +65,22 @@ class App extends React.Component{
 
   handleAI(gameState, gameStateTranspose){
     console.log('ai has been handled')
-    this.handleGameState(2, 2, white, gameState, gameStateTranspose)
+    let inputRow;
+    let inputCol;
+    loop:
+    for (let i = 0; i < gameState.length; i++){
+      for (let j = 0; j < gameState[i].length; j++){
+        if(gameState[i][j] === available){
+          inputRow = i;
+          inputCol = j;
+          console.log('found available at (Row = ' + inputRow + ', Col = ' + inputCol)
+          setTimeout(this.handleGameState(inputRow, inputCol, white, gameState, gameStateTranspose), 3000)
+          clearTimeout()
+          break loop;
+        }
+      }
+    }
+    
     
   }
 
@@ -625,7 +640,7 @@ class App extends React.Component{
      updatedGameStateTranspose = updatedGameStateTranspose.map(i => i.map(j => j === available ? j = 0 : j))
 
      //Update the app state
-     this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
+     //this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
      //Determine valid tiles surrounding the current player (currently excluding edge cases)
      updatedGameState = updatedGameState.map((i, index_i) => {
        return(
@@ -643,20 +658,27 @@ class App extends React.Component{
        ) 
       })
 
-    
+      for (let i = 0; i < updatedGameStateTranspose.length; i++){
+        for (let j = 0; j < updatedGameStateTranspose[i].length; j++){
+          updatedGameStateTranspose[i][j] = updatedGameState[j][i];
+        }
+      }
+
 
 
      //Update the app state
      this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
      this.updateScore(updatedGameState);
      this.setPlayer(activePlayer);
+
+     
   }
   
 
   render(){
-    //create a row for each row in the gameState. Map each item in each row of the gameState to a tile.
+    //create a row for each row in the gameState. Map each item in each row of the gameState to a tile.    
     let updateBoard = this.state.gameState.map((i, rowIndex) => {
-
+    
     return(
         <Row key = {rowIndex}>
           {i.map((j, colIndex) => {
@@ -672,6 +694,7 @@ class App extends React.Component{
                 gameMode = {this.state.gameMode}
                 gameState = {this.state.gameState}
                 gameStateTranspose = {this.state.gameStateTranspose}
+            
                 />
             )
             })
@@ -687,7 +710,9 @@ class App extends React.Component{
                         <button onClick={this.handleGameMode.bind(this, 'aigame')}>Human v. AI</button>
                     </Container> :
                     <Container>
-                      <div className = 'gameboard'>
+                      <div className = 'gameboard' 
+                          onTransitionEnd = {this.state.activePlayer === white && this.state.gameMode === 'aigame' ? 
+                          this.handleAI.bind(this, this.state.gameState, this.state.gameStateTranspose) : null}>
                         {updateBoard}
                       </div>
                       <h4>{this.state.activePlayer === black ? 'Black' : 'White'}'s Turn</h4> 
