@@ -132,6 +132,7 @@ class App extends React.Component{
     */
     
     let result = this.minimax(gameInfo, white, 2)
+    console.log(result)
     let coordinates = {row: result.row, col: result.col}
 
     return coordinates;
@@ -152,11 +153,21 @@ class App extends React.Component{
     }
 
     // check if you are at max depth.
-
     if (depth === 0){
       // if you are at max depth return the score of that node.
-      let huristic = gameInfo.scoreOfState.whitePoints - gameInfo.scoreOfState.blackPoints
-      return {score: huristic}
+      if (gameInfo.scoreOfState.blackPoints > gameInfo.scoreOfState.whitePoints){
+        return {score: 10}
+      }
+      else if (gameInfo.scoreOfState.blackPoints < gameInfo.scoreOfState.whitePoints){
+        return {score: -10}
+      }
+      else {
+        return {score: 0}
+      }
+      
+    }
+    else if (availables.length === 0){
+      return {score: 0}
     }
     
     // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
@@ -171,6 +182,7 @@ class App extends React.Component{
         move.tileValue = newGameState[availables[i].row][availables[i].col];
         move.row = availables[i].row
         move.col = availables[i].col
+       
         // then set the newGameState's row and column to the player's color (black or white). 
               // it'll also need to do all the coloring, determine available spaces, etc.
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
@@ -222,7 +234,6 @@ class App extends React.Component{
         }
       }
     }
-    
     return moves[bestMove];
       
         
@@ -859,13 +870,18 @@ class App extends React.Component{
   
 
   render(){
-    let scoreOfState = {blackPoints: this.state.blackPoints, 
-                        whitePoints: this.state.whitePoints, 
-                        availablePoints: this.state.availablePoints}
-    let gameInfo = {gameState: this.state.gameState, 
+
+    let gameInfo = {  
+                      gameState: this.state.gameState, 
                       gameStateTranspose: this.state.gameStateTranspose, 
                       activePlayer: this.state.activePlayer, 
-                      scoreOfState: scoreOfState}
+                      scoreOfState: 
+                        {
+                          blackPoints: this.state.blackPoints, 
+                          whitePoints: this.state.whitePoints, 
+                          availablePoints: this.state.availablePoints
+                        }
+                    }
 
     let gameMode = (this.state.gameMode === 'menu' ? 
                     <Container>
