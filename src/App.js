@@ -68,10 +68,10 @@ class App extends React.Component{
     this.createGameBoard = this.createGameBoard.bind(this);
   }
 
-  handleAI(gameState, gameStateTranspose){
+  handleAI(gameInfo){
     console.log('ai has been handled')
-    let coordinates = this.bestPlay(gameState, gameStateTranspose)
-    let newGameState = this.handleGameState(coordinates.row, coordinates.col, white, gameState, gameStateTranspose)
+    let coordinates = this.bestPlay(gameInfo)
+    let newGameState = this.handleGameState(coordinates.row, coordinates.col, white, gameInfo.gameState, gameInfo.gameStateTranspose)
     this.updateState(newGameState.gameState, newGameState.gameStateTranspose, white)
   }
 
@@ -113,8 +113,8 @@ class App extends React.Component{
       return winning;
   }
 
-  bestPlay(gameState){
-    
+  bestPlay(gameInfo){
+    /*
     let inputRow;
     let inputCol;
     loop:
@@ -128,14 +128,19 @@ class App extends React.Component{
         }
       }
     }
-    
     let coordinates = {row: inputRow, col: inputCol};
+    */
+    
+    let result = this.minimax(gameInfo, white, 2)
+    let coordinates = {row: result.row, col: result.col}
+
     return coordinates;
     
-    //return this.minimax(gameState, player, depth)
   }
 
-  minimax(newGameState, newGameStateTranspose, player, depth){
+  minimax(gameInfo, player, depth) {
+    let newGameState = gameInfo.gameState;
+    let newGameStateTranspose = gameInfo.gameStateTranspose;
     // find the row and column of available spots to play in the incoming gamestate
     let availables = []
     for (let i = 0; i < newGameState.length; i++){
@@ -147,49 +152,87 @@ class App extends React.Component{
     }
 
     // check if you are at max depth.
-    let maxdepth = 2
-    if (depth === maxdepth){
-      // if you are at max depth and black is winning, return a large negative value
-        if(newGameState.scoreOfState.blackPoints > newGameState.scoreOfState.whitePoints){
-          return -10;
-        }
-        // if you are at max depth and white is winning, return a large positive value
-        else if (newGameState.scoreOfState.blackPoints < newGameState.scoreOfState.whitePoints){
-          return 10;
-        }
-        // if you are at max depth and it is a tie, return a zero.
-        else if( newGameState.scoreOfState.blackPoints === newGameState.scoreOfState.blackPoints){
-          return 0;
-        }
+
+    if (depth === 0){
+      // if you are at max depth return the score of that node.
+      let huristic = gameInfo.scoreOfState.whitePoints - gameInfo.scoreOfState.blackPoints
+      return {score: huristic}
     }
     
     // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
-    let moveScores = [];
+    let moves = [];
     // start a loop that runs through the available spots to play.
     for (let i = 0; i < availables.length; i++){
         // at the beginning of the loop, create an object that stores the row of the move, the col of the move, and the score that results from that move.
         let move = {};
         // set the row of the move object to row of the ith item in the array of available spots to play
         // set the col of the move object to the col of the ith item in the array of available spots ot play
+        ///something might not be right here?????
         move.tileValue = newGameState[availables[i].row][availables[i].col];
-        // then set the newGameState's row and column to the player's color (black or white).
+        move.row = availables[i].row
+        move.col = availables[i].col
+        // then set the newGameState's row and column to the player's color (black or white). 
               // it'll also need to do all the coloring, determine available spaces, etc.
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
-
+        // if the player is the (ai) white player, 
+        if (player === white){
+          //then store the result of calling minimax on the newGameState with the black player and one more level of depth
+          let minimaxResult = this.minimax(result, black, depth - 1)
+          //also set the score of the move object to the score of the result of calling that minimax algorithm
+          move.score = minimaxResult.score
+        }
+        // else, when it is not the AI's turn...
+        else {
+          //then store the result of calling minimax on the newGameState with the white player and one more level of depth
+          let minimaxResult = this.minimax(result, white, depth - 1)
+          //also set the score of the move object to the score of the result of calling that minimax algorithm
+          move.score = minimaxResult.score
+        }
+        // now set newGameState[available_row[i]][avaialble_col[i]] = the index of the move item. ?????????????
+        // moves.push(move) will add the score to the moves array for this iteration.
+        moves.push(move)
     }
+    // determine the best move to make.
+    let bestMove;
+    // if the player is white...
+    if (player === white){
+      let bestScore = -10000;
+      // loop through the moves array (all the scores). 
+      for (let i = 0; i < moves.length; i++){
+        // if the score of the ith item is larger than the bestScore variable:
+        if (moves[i].score > bestScore){
+          // set bestScore to the score of that move.
+          bestScore = moves[i].score
+          // set bestMove = index of moves array
+          bestMove = i;
+        }
+      }
+    }
+    // if the player is black, chose the lowest score.
+    else {
+      // create a variable called bestScore and set it to a really large number (10000)
+      let bestScore = 10000;
+      for (let i = 0; i < moves.length; i++){
+        // if the score of the ith item is less than the bestScore variable:
+        if (moves[i].score < bestScore){
+          // set bestScore to the score of that move.
+          bestScore = moves[i].score
+          // set bestMove = index of moves array
+          bestMove = i;
+        }
+      }
+    }
+    
+    return moves[bestMove];
+      
         
         
-        
-        
-              
-        // if the player is the white player, 
-            //then store the result of calling minimax on the newGameState with the black player and one more level of depth
-            //also set the score of the move object to the score of the result of calling that minimax algorithm
+
         // else, 
             //then store the result of calling minimax on the newGameState with the white player and one more level of depth
             //also set the score of the move object to the score of the result of calling that minimax algorithm
         
-        // now set newGameState[available_row[i]][avaialble_col[i]] = the index of the move item.
+        // now set newGameState[available_row[i]][avaialble_col[i]] = the index of the move item. ???????
         // moves.push(move) will add the score to the moves array for this iteration.
     
     // determine the best move to make.
@@ -209,8 +252,9 @@ class App extends React.Component{
     
     // return the best moves (i.e. moves[bestMove])
   }
+  
 
-  checkTileOnRight(rowIndex, colIndex, activePlayer){
+  checkTileOnRight(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check the next tile.
     if (colIndex === 7){return false}
@@ -221,8 +265,8 @@ class App extends React.Component{
       let j = colIndex + 1;
       while (j <= 7){
         let result;
-        if (this.state.gameState[i][j] === available){result = blank}
-        else{result = this.state.gameState[i][j]}
+        if (tempGameState[i][j] === available){result = blank}
+        else{result = tempGameState[i][j]}
         tilesOnRightFromMeToRight.push(result);
         j++;
       } 
@@ -241,7 +285,7 @@ class App extends React.Component{
   }
 }
 
-  checkTileOnLeft(rowIndex, colIndex, activePlayer){
+  checkTileOnLeft(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check the previous tile.
     if (colIndex === 0){return false}
@@ -251,8 +295,8 @@ class App extends React.Component{
       let j = colIndex - 1;
       while (j >= 0){
         let result;
-        if (this.state.gameState[i][j] === available){result = blank}
-        else{result = this.state.gameState[i][j]}
+        if (tempGameState[i][j] === available){result = blank}
+        else{result = tempGameState[i][j]}
         tilesOnLeftFromMeToLeft.push(result);
         j--;
       } 
@@ -273,12 +317,12 @@ class App extends React.Component{
   
   }
 
-  checkTileAbove(rowIndex, colIndex, activePlayer){
+  checkTileAbove(rowIndex, colIndex, activePlayer, tempGameStateTranspose){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check above.
     if (rowIndex === 0){return false}
     else{
-      let tilesAboveFromMeToTop = this.state.gameStateTranspose[colIndex].slice(0, rowIndex).reverse()  //creates an array of the tile on the right of the current one.
+      let tilesAboveFromMeToTop = tempGameStateTranspose[colIndex].slice(0, rowIndex).reverse()  //creates an array of the tile on the right of the current one.
       let tileAboveIsActivePlayer = (tilesAboveFromMeToTop[0] === activePlayer ? true : false)
       let firstInactivePlayerIndex = tilesAboveFromMeToTop.indexOf(inactivePlayer)
       let firstBlankIndex = tilesAboveFromMeToTop.indexOf(blank)
@@ -295,12 +339,12 @@ class App extends React.Component{
     }
   }
 
-  checkTileBelow(rowIndex, colIndex, activePlayer){
+  checkTileBelow(rowIndex, colIndex, activePlayer, tempGameStateTranspose){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check above.
     if (rowIndex === 7){return false}
     else{
-      let tilesBelowFromMeToBottom = this.state.gameStateTranspose[colIndex].slice(rowIndex + 1)
+      let tilesBelowFromMeToBottom = tempGameStateTranspose[colIndex].slice(rowIndex + 1)
       let tileBelowIsActivePlayer = (tilesBelowFromMeToBottom[0] === activePlayer ? true : false)
       let firstInactivePlayerIndex = tilesBelowFromMeToBottom.indexOf(inactivePlayer)
       let firstBlankIndex = tilesBelowFromMeToBottom.indexOf(blank)
@@ -317,7 +361,7 @@ class App extends React.Component{
   }
 
 
-  checkNorthEast(rowIndex, colIndex, activePlayer){
+  checkNorthEast(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  0 || colIndex === 7){return false}
     else{
@@ -326,8 +370,8 @@ class App extends React.Component{
       let j = colIndex + 1;
       while (i >= 0 && j <= 7){
         let result;
-        if (this.state.gameState[i][j] === available){result = blank}
-        else{result = this.state.gameState[i][j]}
+        if (tempGameState[i][j] === available){result = blank}
+        else{result = tempGameState[i][j]}
         tilesFromMeToNorthEast.push(result);
         i--;
         j++;
@@ -348,7 +392,7 @@ class App extends React.Component{
   }
 
 
-  checkNorthWest(rowIndex, colIndex, activePlayer){
+  checkNorthWest(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  0 || colIndex === 0){return false}
     else{
@@ -357,8 +401,8 @@ class App extends React.Component{
       let j = colIndex - 1;
       while (i >= 0 && j >= 0){
         let result;
-        if (this.state.gameState[i][j] === available){result = blank}
-        else{result = this.state.gameState[i][j]}
+        if (tempGameState[i][j] === available){result = blank}
+        else{result = tempGameState[i][j]}
         tilesFromMeToNorthWest.push(result);
         i--;
         j--;
@@ -378,7 +422,7 @@ class App extends React.Component{
 
   }
 
-  checkSouthEast(rowIndex, colIndex, activePlayer){
+  checkSouthEast(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  7 || colIndex === 7){return false}
     else{
@@ -387,8 +431,8 @@ class App extends React.Component{
       let j = colIndex + 1;
       while (i <= 7 && j <= 7){
         let result;
-        if (this.state.gameState[i][j] === available){result = blank}
-        else{result = this.state.gameState[i][j]}
+        if (tempGameState[i][j] === available){result = blank}
+        else{result = tempGameState[i][j]}
         tilesFromMeToSouthEast.push(result);
         i++;
         j++;
@@ -408,7 +452,7 @@ class App extends React.Component{
 
   }
 
-  checkSouthWest(rowIndex, colIndex, activePlayer){
+  checkSouthWest(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  7 || colIndex === 0){return false}
     else{
@@ -417,8 +461,8 @@ class App extends React.Component{
       let j = colIndex - 1;
       while (i <= 7 && j >= 0){
         let result;
-        if (this.state.gameState[i][j] === available){result = blank}
-        else{result = this.state.gameState[i][j]}
+        if (tempGameState[i][j] === available){result = blank}
+        else{result = tempGameState[i][j]}
         tilesFromMeToSouthWest.push(result);
         i++;
         j--;
@@ -738,8 +782,8 @@ class App extends React.Component{
      updatedGameState = updatedGameState.map(i => i.map(j => j === available ? j = 0 : j))
      updatedGameStateTranspose = updatedGameStateTranspose.map(i => i.map(j => j === available ? j = 0 : j))
 
-     //Update the app state
-     //this.setState({gameState: updatedGameState, gameStateTranspose: updatedGameStateTranspose})
+     let tempGameState = updatedGameState
+     let tempGameStateTranspose = updatedGameStateTranspose
      //Determine valid tiles surrounding the current player (currently excluding edge cases)
      updatedGameState = updatedGameState.map((i, index_i) => {
        return(
@@ -747,10 +791,10 @@ class App extends React.Component{
             
             return(
               (j === blank || j === available) &&
-              ( this.checkTileOnRight(index_i, index_j, activePlayer) || this.checkTileOnLeft(index_i, index_j, activePlayer) || 
-               this.checkTileAbove(index_i, index_j, activePlayer) || this.checkTileBelow(index_i, index_j, activePlayer) || 
-               this.checkNorthEast(index_i, index_j, activePlayer) || this.checkNorthWest(index_i, index_j, activePlayer) ||
-               this.checkSouthEast(index_i, index_j, activePlayer) || this.checkSouthWest(index_i, index_j, activePlayer) ) ? 
+              ( this.checkTileOnRight(index_i, index_j, activePlayer, tempGameState) || this.checkTileOnLeft(index_i, index_j, activePlayer, tempGameState) || 
+               this.checkTileAbove(index_i, index_j, activePlayer, tempGameStateTranspose) || this.checkTileBelow(index_i, index_j, activePlayer, tempGameStateTranspose) || 
+               this.checkNorthEast(index_i, index_j, activePlayer, tempGameState) || this.checkNorthWest(index_i, index_j, activePlayer, tempGameState) ||
+               this.checkSouthEast(index_i, index_j, activePlayer, tempGameState) || this.checkSouthWest(index_i, index_j, activePlayer, tempGameState) ) ? 
               j = 8 : j
               )
           })
@@ -812,8 +856,17 @@ class App extends React.Component{
       return result
   }
   
+  
 
   render(){
+    let scoreOfState = {blackPoints: this.state.blackPoints, 
+                        whitePoints: this.state.whitePoints, 
+                        availablePoints: this.state.availablePoints}
+    let gameInfo = {gameState: this.state.gameState, 
+                      gameStateTranspose: this.state.gameStateTranspose, 
+                      activePlayer: this.state.activePlayer, 
+                      scoreOfState: scoreOfState}
+
     let gameMode = (this.state.gameMode === 'menu' ? 
                     <Container>
                         <h3>Choose A Mode:</h3>
@@ -839,7 +892,7 @@ class App extends React.Component{
                                                                               (this.state.blackPoints > this.state.whitePoints ? 'Black Wins' : 'White Wins')} </h6> :  null}
                       </div>
                       <div>{this.state.availablePoints}</div>
-                      <button onClick={this.handleAI.bind(this, this.state.gameState, this.state.gameStateTranspose)}>Click to play for computer</button>
+                      <button onClick={this.handleAI.bind(this, gameInfo)}>Click to play for computer</button>
                     </Container> 
                       )
           
