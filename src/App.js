@@ -131,7 +131,7 @@ class App extends React.Component{
     let coordinates = {row: inputRow, col: inputCol};
     */
     
-    let result = this.minimax(gameInfo, white, 2)
+    let result = this.minimax(gameInfo, white, 4)
     console.log(result)
     let coordinates = {row: result.row, col: result.col}
 
@@ -143,7 +143,9 @@ class App extends React.Component{
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
     // find the row and column of available spots to play in the incoming gamestate
-    let availables = []
+    let availables = [];
+    
+
     for (let i = 0; i < newGameState.length; i++){
       for (let j = 0; j < newGameState[i].length; j++){
         if (newGameState[i][j] === available){
@@ -152,19 +154,19 @@ class App extends React.Component{
       }
     }
 
+    let nodeScore = this.updateScore(newGameState)
     // check if you are at max depth.
     if (depth === 0){
       // if you are at max depth return the score of that node.
-      if (gameInfo.scoreOfState.blackPoints > gameInfo.scoreOfState.whitePoints){
-        return {score: 10}
+      if (player === black){
+        let heuristic = 100 * (nodeScore.blackPoints - nodeScore.whitePoints) / (nodeScore.blackPoints + nodeScore.whitePoints)
+        return {score: heuristic}
       }
-      else if (gameInfo.scoreOfState.blackPoints < gameInfo.scoreOfState.whitePoints){
-        return {score: -10}
+      if (player === white){
+        let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
+        return {score: heuristic}
       }
-      else {
-        return {score: 0}
-      }
-      
+          
     }
     else if (availables.length === 0){
       return {score: 0}
@@ -179,13 +181,22 @@ class App extends React.Component{
         // set the row of the move object to row of the ith item in the array of available spots to play
         // set the col of the move object to the col of the ith item in the array of available spots ot play
         ///something might not be right here?????
-        move.tileValue = newGameState[availables[i].row][availables[i].col];
-        move.row = availables[i].row
-        move.col = availables[i].col
+        move.value = newGameState[availables[i].row][availables[i].col]
+        move.row = availables[i].row;
+        move.col = availables[i].col;
+        let tiles = [];
+        for (let j = 0; j < newGameState.length; j++){
+          for (let k = 0; k < newGameState[j].length; k++){
+            tiles.push({row: j, col: k, value: newGameState[j][k]})
+          }
+        }
+ 
+      
        
-        // then set the newGameState's row and column to the player's color (black or white). 
-              // it'll also need to do all the coloring, determine available spaces, etc.
+        //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
+      
+
         // if the player is the (ai) white player, 
         if (player === white){
           //then store the result of calling minimax on the newGameState with the black player and one more level of depth
@@ -200,7 +211,12 @@ class App extends React.Component{
           //also set the score of the move object to the score of the result of calling that minimax algorithm
           move.score = minimaxResult.score
         }
-        // now set newGameState[available_row[i]][avaialble_col[i]] = the index of the move item. ?????????????
+        // set the board back to how it was if the play never happened.    
+        for (let j = 0; j < tiles.length; j++){
+            newGameState[tiles[j].row][tiles[j].col] = tiles[j].value
+            newGameStateTranspose[tiles[j].col][tiles[j].row] = tiles[j].value
+        }
+      
         // moves.push(move) will add the score to the moves array for this iteration.
         moves.push(move)
     }
@@ -234,34 +250,8 @@ class App extends React.Component{
         }
       }
     }
+    
     return moves[bestMove];
-      
-        
-        
-
-        // else, 
-            //then store the result of calling minimax on the newGameState with the white player and one more level of depth
-            //also set the score of the move object to the score of the result of calling that minimax algorithm
-        
-        // now set newGameState[available_row[i]][avaialble_col[i]] = the index of the move item. ???????
-        // moves.push(move) will add the score to the moves array for this iteration.
-    
-    // determine the best move to make.
-    // create a variable called bestMove
-    // if the player is white:
-        // create a variable called bestScore and set it to a really low number (-10000)
-        // loop through the moves array (all the scores). 
-            // if the score of the ith item is larger than the bestScore variable:
-                // set bestScore to the score of that move.
-                // set bestMove = index of moves array
-    // if the player is black, chose the lowest score.
-        // create a variable called bestScore and set it to a really large number (10000)
-            // loop through the moves array (all the scores). 
-                // if the score of the ith item is less than the bestScore variable:
-                    // set bestScore to the score of that move.
-                    // set bestMove = index of moves array
-    
-    // return the best moves (i.e. moves[bestMove])
   }
   
 
