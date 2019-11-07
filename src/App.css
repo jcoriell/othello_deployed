@@ -36,13 +36,13 @@
   background: #8e9984;
 }
 
-.col{
+.mycol{
   height: 100%;
   background: #3d6b49;
   border: 1px solid black;
 }
 
-.row{
+.myrow{
   height: 12.5%;
   border: 0.5px solid black;
 }
@@ -52,9 +52,13 @@
 
  }
 
-.container{
+.gamecontainer{
   width: 500px;
   height: 500px;
+}
+
+.settings{
+  width: 100px;
 }
 
 .gameboard{

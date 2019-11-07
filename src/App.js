@@ -12,11 +12,12 @@ This program implements Othello. You can play with two humans, or a human can pl
 
 import React from 'react';
 import './App.css';
-import { Row, Container } from 'react-bootstrap';
+import { Row, Container, Col } from 'react-bootstrap';
 import Tile from './components/Tile';
+import DebugTile from './components/DebugTile'
 
-const black = 1;
-const white = 2;
+var black = 1;
+var white = 2;
 const available = 8;
 const blank = 0;
 
@@ -41,12 +42,15 @@ class App extends React.Component{
                             [0,0,0,0,available,0,0,0],
                             [0,0,0,0,0,0,0,0],
                             [0,0,0,0,0,0,0,0],],
-      activePlayer : 1,
-      inactivePlayer : 2,
+      activePlayer : black,
+      inactivePlayer : white,
       blackPoints: 2,
       whitePoints: 2,
       availablePoints: 4,
-      gameMode: 'menu'
+      gameMode: 'menu',
+      humanIsBlack: true,
+      debugBoards: [],
+      debugMode: false,
     }
     this.setPlayer = this.setPlayer.bind(this);
     this.handleGameState = this.handleGameState.bind(this);
@@ -66,13 +70,44 @@ class App extends React.Component{
     this.minimax = this.minimax.bind(this);
     this.updateState = this.updateState.bind(this);
     this.createGameBoard = this.createGameBoard.bind(this);
+    this.toggleColor = this.toggleColor.bind(this);
+    this.createDebugBoard = this.createDebugBoard.bind(this);
+    this.toggleDebug = this.toggleDebug.bind(this)
   }
+
+
+  createDebugBoard(gameInfo){
+  
+    let result = gameInfo.gameState.map((i, rowIndex) => {
+    
+      return(
+          <Row className = 'myrow' key = {rowIndex}>
+            {i.map((j, colIndex) => {
+              return(
+                <DebugTile 
+                  key = {colIndex}
+                  tileValue = {j} 
+                  humanIsBlack = {this.state.humanIsBlack}
+                  available = {available}
+                  />
+              )
+              })
+            }
+          </Row>
+        )
+      })
+
+      return result
+ 
+  }
+
+
 
   handleAI(gameInfo){
     console.log('ai has been handled')
     let coordinates = this.bestPlay(gameInfo)
-    let newGameState = this.handleGameState(coordinates.row, coordinates.col, white, gameInfo.gameState, gameInfo.gameStateTranspose)
-    this.updateState(newGameState.gameState, newGameState.gameStateTranspose, white)
+    let newGameState = this.handleGameState(coordinates.row, coordinates.col, gameInfo.activePlayer, gameInfo.gameState, gameInfo.gameStateTranspose)
+    this.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
   }
 
   handleGameMode(mode){
@@ -131,7 +166,7 @@ class App extends React.Component{
     let coordinates = {row: inputRow, col: inputCol};
     */
     
-    let result = this.minimax(gameInfo, white, 4)
+    let result = this.minimax(gameInfo, gameInfo.activePlayer, 4)
     console.log(result)
     let coordinates = {row: result.row, col: result.col}
 
@@ -140,6 +175,7 @@ class App extends React.Component{
   }
 
   minimax(gameInfo, player, depth) {
+    let debugBoards = [];
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
     // find the row and column of available spots to play in the incoming gamestate
@@ -195,7 +231,7 @@ class App extends React.Component{
        
         //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
-      
+        debugBoards.push(this.createDebugBoard(result))
 
         // if the player is the (ai) white player, 
         if (player === white){
@@ -251,6 +287,8 @@ class App extends React.Component{
       }
     }
     
+    var joined = this.state.debugBoards.concat(debugBoards);
+    this.setState({ debugBoards: joined })
     return moves[bestMove];
   }
   
@@ -499,7 +537,7 @@ class App extends React.Component{
      //Initialize Updated Game State and it's transpose
      let updatedGameState = gameState;
      let updatedGameStateTranspose = gameStateTranspose;
-     let inactivePlayer = (activePlayer === 1 ? 2 : 1)
+     let inactivePlayer = (activePlayer === black ? white : black)
 
     // color downward
     let downExistance = [];
@@ -830,7 +868,7 @@ class App extends React.Component{
     let result = gameState.map((i, rowIndex) => {
     
       return(
-          <Row key = {rowIndex}>
+          <Row className = 'myrow' key = {rowIndex}>
             {i.map((j, colIndex) => {
               return(
                 <Tile 
@@ -845,6 +883,10 @@ class App extends React.Component{
                   gameState = {this.state.gameState}
                   gameStateTranspose = {this.state.gameStateTranspose}
                   updateState = {this.updateState}
+                  black = {black}
+                  white = {white}
+                  available = {available}
+                  humanIsBlack = {this.state.humanIsBlack}
               
                   />
               )
@@ -857,7 +899,13 @@ class App extends React.Component{
       return result
   }
   
-  
+  toggleColor(){
+    this.setState({humanIsBlack: !this.state.humanIsBlack})
+  }
+
+  toggleDebug(){
+    this.setState({debugMode: !this.state.debugMode})
+  }
 
   render(){
 
@@ -874,39 +922,61 @@ class App extends React.Component{
                     }
 
     let gameMode = (this.state.gameMode === 'menu' ? 
-                    <Container>
+                    <Container className = 'gamecontainer'>
                         <h3>Choose A Mode:</h3>
                         <button onClick={this.handleGameMode.bind(this, '2playergame')}>Human v. Human</button>
                         <button onClick={this.handleGameMode.bind(this, 'aigame')}>Human v. AI</button>
                     </Container> :
-                    <Container>
-                      <div className = 'gameboard'
+                    <Container className = 'gamecontainer'>
+                      
+                      <div className = 'gameboard' style={{display: 'inline-block'}}
+                      onTransitionEnd={this.state.gameMode === 'aigame' && this.state.activePlayer === white ? this.handleAI.bind(this, gameInfo) : null}
                          >
                         {this.createGameBoard(this.state.gameState)}
                       </div>
-                      <h4>{this.state.activePlayer === black ? 'Black' : 'White'}'s Turn</h4> 
-                      <div>
-                        <h5>Score for Black:</h5>
-                        <p>{this.state.blackPoints}</p>
-                      </div>
-                      <div>
-                        <h5>Score for White:</h5>
-                        <p>{this.state.whitePoints}</p>
-                      </div>
-                      <div>
-                        {this.state.gameMode === 'gameover' ? <h6>Game Over - {this.state.blackPoints === this.state.whitePoints ? 'Tie Game' : 
-                                                                              (this.state.blackPoints > this.state.whitePoints ? 'Black Wins' : 'White Wins')} </h6> :  null}
-                      </div>
-                      <div>{this.state.availablePoints}</div>
-                      <button onClick={this.handleAI.bind(this, gameInfo)}>Click to play for computer</button>
+                     
+                      
+                        <h4>{this.state.activePlayer === black ? 'Player 1' : 'Player 2'}'s Turn</h4> 
+                        <div>
+                          <h5>Score for Player 1:</h5>
+                          <p>{this.state.blackPoints}</p>
+                        </div>
+                        <div>
+                          <h5>Score for Player 2:</h5>
+                          <p>{this.state.whitePoints}</p>
+                        </div>
+                        <div>
+                          {this.state.gameMode === 'gameover' ? <h6>Game Over - {this.state.blackPoints === this.state.whitePoints ? 'Tie Game' : 
+                                                                                (this.state.blackPoints > this.state.whitePoints ? 'Black Wins' : 'White Wins')} </h6> :  null}
+                        </div>    
+                      
                     </Container> 
                       )
+    let settings = <Container>
+                    <h4>Settings</h4>
+                    <h6 style={{marginTop: '1em'}}>Choose your color:</h6>
+                    <button onClick = {this.toggleColor}>Toggle Color</button>
+                    <h6 style={{marginTop: '1em'}}>Debug Mode</h6>
+                    <button onClick = {this.toggleDebug}>Toggle Debug Mode</button>
+                    <h6 style={{marginTop: '1em'}}>Cheat</h6>
+                    <button onClick={this.handleAI.bind(this, gameInfo)}>Click for an AI play</button>
+                  </Container>
+
+    let debugMode = <div style={{margin: '50px'}} >
+                    <h4>Debug Mode</h4>
+                    {this.state.debugBoards.map(item => <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item}</div>)}
+                    
+                    </div>
           
   
     return(
       <React.Fragment>
-        {gameMode}
-      </React.Fragment>
+      <Row>
+        <Col className = 'settings' xs  = {3}>{settings}</Col>
+        <Col className = 'gameMode' xs = {4}>{gameMode}</Col>
+      </Row>
+        {this.state.debugMode ? <Row style = {{marginTop: '200px'}}><Col className = 'debug'>{debugMode}</Col></Row> : null}
+      </React.Fragment> 
     )
   }
 }

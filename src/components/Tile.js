@@ -10,27 +10,37 @@ class Tile extends React.Component{
     }
 
     handleClick(){
-        if (this.props.gameMode === '2playergame' && this.props.tileValue === 8){
+        if (this.props.gameMode === '2playergame' && this.props.tileValue === this.props.available ){
            let newGameState = this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
            this.props.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
         }
-        if (this.props.gameMode === 'aigame' && this.props.tileValue === 8 && this.props.activePlayer === 1){
+        if (this.props.gameMode === 'aigame' && this.props.tileValue === this.props.available && this.props.activePlayer === this.props.black){
            let newGameState = this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
            this.props.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
-           this.props.handleAI(newGameState)
         }
+        
     }
 
     determineTileType(){
         let result;
 
         if (this.props.tileValue === 1){
-            result = 'player1'
+            if (this.props.humanIsBlack){
+                result = 'player1'
+            }
+            else{
+                result = 'player2'
+            }
         }
         else if (this.props.tileValue === 2){
-            result = 'player2'
+            if (this.props.humanIsBlack){
+                result = 'player2'
+            }
+            else{
+                result = 'player1'
+            }
         }
-        else if (this.props.tileValue=== 8){
+        else if (this.props.tileValue=== this.props.available){
             result = 'adjacentTile'
         }
         else {
@@ -43,7 +53,7 @@ class Tile extends React.Component{
         let tileStyle = this.determineTileType();
 
         return(
-            <Col onClick={this.handleClick}><div className = {tileStyle}></div></Col>
+            <Col className = 'mycol' onClick={this.handleClick}><div className = {tileStyle}></div></Col>
         )
     }
 }
