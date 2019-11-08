@@ -12,7 +12,7 @@ This program implements Othello. You can play with two humans, or a human can pl
 
 import React from 'react';
 import './App.css';
-import { Row, Container, Col } from 'react-bootstrap';
+import { Row, Container, Col, Form, Button } from 'react-bootstrap';
 import Tile from './components/Tile';
 import DebugTile from './components/DebugTile'
 
@@ -51,6 +51,8 @@ class App extends React.Component{
       humanIsBlack: true,
       debugBoards: [],
       debugMode: false,
+      pruning: false,
+      aiDepth: 3,
     }
     this.setPlayer = this.setPlayer.bind(this);
     this.handleGameState = this.handleGameState.bind(this);
@@ -73,6 +75,9 @@ class App extends React.Component{
     this.toggleColor = this.toggleColor.bind(this);
     this.createDebugBoard = this.createDebugBoard.bind(this);
     this.toggleDebug = this.toggleDebug.bind(this)
+    this.alphabetaprune = this.alphabetaprune.bind(this);
+    this.togglePruning = this.togglePruning.bind(this);
+    this.handleDepth = this.handleDepth.bind(this);
   }
 
 
@@ -165,18 +170,28 @@ class App extends React.Component{
     }
     let coordinates = {row: inputRow, col: inputCol};
     */
-   let alpha = -10000
-   let beta = 10000
+   let coordinates;
+   let depth = this.state.aiDepth;
+   if (this.state.pruning){
+    let alpha = -10000
+    let beta = 10000
     
-    let result = this.minimax(gameInfo, gameInfo.activePlayer, 5, alpha, beta)
+    let result = this.alphabetaprune(gameInfo, gameInfo.activePlayer, depth, alpha, beta)
     console.log(result)
-    let coordinates = {row: result.row, col: result.col}
+    coordinates = {row: result.row, col: result.col}
+   }
+
+   else { 
+    let result = this.minimax(gameInfo, gameInfo.activePlayer, depth)
+    console.log(result)
+    coordinates = {row: result.row, col: result.col}
+   }
 
     return coordinates;
     
   }
 
-  minimax(gameInfo, player, depth, alpha, beta) {
+  alphabetaprune(gameInfo, player, depth, alpha, beta) {
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
     // find the row and column of available spots to play in the incoming gamestate
@@ -238,7 +253,7 @@ class App extends React.Component{
         // if the player is the (ai) white player, 
         if (player === white){
           //then store the result of calling minimax on the newGameState with the black player and one more level of depth
-          let minimaxResult = this.minimax(result, black, depth - 1, alpha, beta)
+          let minimaxResult = this.alphabetaprune(result, black, depth - 1, alpha, beta)
           //also set the score of the move object to the score of the result of calling that minimax algorithm
           move.score = minimaxResult.score
 
@@ -260,7 +275,7 @@ class App extends React.Component{
         // else, when it is not the AI's turn...
         else {
           //then store the result of calling minimax on the newGameState with the white player and one more level of depth
-          let minimaxResult = this.minimax(result, white, depth - 1, alpha, beta)
+          let minimaxResult = this.alphabetaprune(result, white, depth - 1, alpha, beta)
           //also set the score of the move object to the score of the result of calling that minimax algorithm
           move.score = minimaxResult.score
 
@@ -318,6 +333,154 @@ class App extends React.Component{
         }
       }
     }
+    
+    let debugBoards = []
+    for(let i = 0; i < moves.length; i++){
+      debugBoards.push({board: moves[i].board, score: moves[i].score, depth: depth});
+    }
+
+    let key = 'debugBoards' + depth
+  
+    this.setState({ [key]: debugBoards })
+    return moves[bestMove];
+  }
+  
+
+
+
+
+
+  minimax(gameInfo, player, depth) {
+    let newGameState = gameInfo.gameState;
+    let newGameStateTranspose = gameInfo.gameStateTranspose;
+    // find the row and column of available spots to play in the incoming gamestate
+    let availables = [];
+    
+
+    for (let i = 0; i < newGameState.length; i++){
+      for (let j = 0; j < newGameState[i].length; j++){
+        if (newGameState[i][j] === available){
+          availables.push({row: i, col: j})
+        }
+      }
+    }
+
+    let nodeScore = this.updateScore(newGameState)
+    // check if you are at max depth.
+    if (depth === 0){
+      // if you are at max depth return the score of that node.
+     /* if (player === black){
+        let heuristic = 100 * (nodeScore.blackPoints - nodeScore.whitePoints) / (nodeScore.blackPoints + nodeScore.whitePoints)
+        return {score: heuristic}
+      }
+      if (player === white){*/
+        let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
+        return {score: heuristic}
+      //}
+          
+    }
+    else if (availables.length === 0){
+      return {score: 0}
+    }
+    
+    // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
+    let moves = [];
+    // start a loop that runs through the available spots to play.
+    for (let i = 0; i < availables.length; i++){
+        // at the beginning of the loop, create an object that stores the row of the move, the col of the move, and the score that results from that move.
+        let move = {};
+        // set the row of the move object to row of the ith item in the array of available spots to play
+        // set the col of the move object to the col of the ith item in the array of available spots ot play
+        ///something might not be right here?????
+        move.value = newGameState[availables[i].row][availables[i].col]
+        move.row = availables[i].row;
+        move.col = availables[i].col;
+        
+        let tiles = [];
+        for (let j = 0; j < newGameState.length; j++){
+          for (let k = 0; k < newGameState[j].length; k++){
+            tiles.push({row: j, col: k, value: newGameState[j][k]})
+          }
+        }
+ 
+      
+       
+        //simiulate a play by the current player
+        let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
+        move.board = this.createDebugBoard(result)
+
+        // if the player is the (ai) white player, 
+        if (player === white){
+          //then store the result of calling minimax on the newGameState with the black player and one more level of depth
+          let minimaxResult = this.minimax(result, black, depth - 1)
+          //also set the score of the move object to the score of the result of calling that minimax algorithm
+          move.score = minimaxResult.score
+
+          // set the board back to how it was if the play never happened. 
+          for (let j = 0; j < tiles.length; j++){
+            newGameState[tiles[j].row][tiles[j].col] = tiles[j].value
+            newGameStateTranspose[tiles[j].col][tiles[j].row] = tiles[j].value
+          }
+          moves.push(move)
+          /// compare alpha to move.score and set alpha to whichever is larger
+
+        }
+        // else, when it is not the AI's turn...
+        else {
+          //then store the result of calling minimax on the newGameState with the white player and one more level of depth
+          let minimaxResult = this.minimax(result, white, depth - 1)
+          //also set the score of the move object to the score of the result of calling that minimax algorithm
+          move.score = minimaxResult.score
+
+          // set the board back to how it was if the play never happened. 
+          for (let j = 0; j < tiles.length; j++){
+            newGameState[tiles[j].row][tiles[j].col] = tiles[j].value
+            newGameStateTranspose[tiles[j].col][tiles[j].row] = tiles[j].value
+          }
+
+          // moves.push(move) will add the score to the moves array for this iteration.
+          moves.push(move)
+
+          // compare beta to move.score and set beta to whichever is smaller.
+        }
+        // set the board back to how it was if the play never happened.    
+
+      
+        // moves.push(move) will add the score to the moves array for this iteration.
+        //moves.push(move)
+    }
+    // determine the best move to make.
+    let bestMove;
+    // if the player is white...
+    if (player === white){
+      let bestScore = -10000;
+      // loop through the moves array (all the scores). 
+      for (let i = 0; i < moves.length; i++){
+        // if the score of the ith item is larger than the bestScore variable:
+        if (moves[i].score > bestScore){
+          // set bestScore to the score of that move.
+          bestScore = moves[i].score
+          // set bestMove = index of moves array
+          bestMove = i;
+        }
+      }
+    }
+    // if the player is black, chose the lowest score.
+    else {
+      // create a variable called bestScore and set it to a really large number (10000)
+      let bestScore = 10000;
+      for (let i = 0; i < moves.length; i++){
+        // if the score of the ith item is less than the bestScore variable:
+        if (moves[i].score < bestScore){
+          // set bestScore to the score of that move.
+          bestScore = moves[i].score
+          // set bestMove = index of moves array
+          bestMove = i;
+        }
+      }
+    }
+
+
     
     let debugBoards = []
     for(let i = 0; i < moves.length; i++){
@@ -945,6 +1108,14 @@ class App extends React.Component{
     this.setState({debugMode: !this.state.debugMode})
   }
 
+  togglePruning(){
+    this.setState({pruning: !this.state.pruning})
+  }
+
+  handleDepth(depth){
+    this.setState({aiDepth: depth})
+  }
+
   render(){
 
     let gameInfo = {  
@@ -993,11 +1164,64 @@ class App extends React.Component{
     let settings = <Container>
                     <h4>Settings</h4>
                     <h6 style={{marginTop: '1em'}}>Choose your color:</h6>
-                    <button onClick = {this.toggleColor}>Toggle Color</button>
+                    <Button variant={this.state.humanIsBlack ? 'dark' : 'light'} onClick = {this.toggleColor}>Toggle Color</Button>
                     <h6 style={{marginTop: '1em'}}>Debug Mode</h6>
-                    <button onClick = {this.toggleDebug}>Toggle Debug Mode</button>
+                    <Form>
+                      <Form.Check 
+                        onClick={this.toggleDebug}
+                        type="switch"
+                        id="debug-switch"
+                        label= {this.state.debugMode ? "On" : "Off"}
+                      />
+                    </Form>
                     <h6 style={{marginTop: '1em'}}>Cheat</h6>
-                    <button onClick={this.handleAI.bind(this, gameInfo)}>Click for an AI play</button>
+                    <Button variant = "primary" onClick={this.handleAI.bind(this, gameInfo)}>Click for an AI play</Button>
+                    <h6 style={{marginTop: '1em'}}>Alpha Beta Pruning</h6>
+                    <Form>
+                      <Form.Check 
+                        onClick={this.togglePruning}
+                        type="switch"
+                        id="pruning-switch"
+                        label= {this.state.pruning ? "On" : "Off"}
+                      />
+                    </Form>
+                 
+                  <h6 style={{marginTop: '1em'}}>Depth</h6>
+                  <Form>
+                    <Form.Check
+                        defaultChecked
+                        custom
+                        type="radio"
+                        label="2"
+                        name="formHorizontalRadios"
+                        id="formHorizontalRadios1"
+                        onClick = {this.handleDepth.bind(this, 3)}
+                      />
+                      <Form.Check
+                        custom
+                        type="radio"
+                        label="4"
+                        name="formHorizontalRadios"
+                        id="formHorizontalRadios2"
+                        onClick = {this.handleDepth.bind(this, 5)}
+                      />
+                      <Form.Check
+                        custom
+                        type="radio"
+                        label="6"
+                        name="formHorizontalRadios"
+                        id="formHorizontalRadios3"
+                        onClick = {this.handleDepth.bind(this, 7)}
+                      />
+                      <Form.Check
+                        custom
+                        type="radio"
+                        label="8"
+                        name="formHorizontalRadios"
+                        id="formHorizontalRadios4"
+                        onClick = {this.handleDepth.bind(this, 9)}
+                      />
+                  </Form>
                   </Container>
 
     let debugMode = <div style={{margin: '50px'}} >
