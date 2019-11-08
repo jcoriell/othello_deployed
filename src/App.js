@@ -175,7 +175,6 @@ class App extends React.Component{
   }
 
   minimax(gameInfo, player, depth) {
-    let debugBoards = [];
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
     // find the row and column of available spots to play in the incoming gamestate
@@ -220,6 +219,7 @@ class App extends React.Component{
         move.value = newGameState[availables[i].row][availables[i].col]
         move.row = availables[i].row;
         move.col = availables[i].col;
+        
         let tiles = [];
         for (let j = 0; j < newGameState.length; j++){
           for (let k = 0; k < newGameState[j].length; k++){
@@ -231,7 +231,7 @@ class App extends React.Component{
        
         //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
-        debugBoards.push(this.createDebugBoard(result))
+        move.board = this.createDebugBoard(result)
 
         // if the player is the (ai) white player, 
         if (player === white){
@@ -287,8 +287,14 @@ class App extends React.Component{
       }
     }
     
-    var joined = this.state.debugBoards.concat(debugBoards);
-    this.setState({ debugBoards: joined })
+    let debugBoards = []
+    for(let i = 0; i < moves.length; i++){
+      debugBoards.push({board: moves[i].board, score: moves[i].score, depth: depth});
+    }
+
+    let key = 'debugBoards' + depth
+  
+    this.setState({ [key]: debugBoards })
     return moves[bestMove];
   }
   
@@ -964,7 +970,66 @@ class App extends React.Component{
 
     let debugMode = <div style={{margin: '50px'}} >
                     <h4>Debug Mode</h4>
-                    {this.state.debugBoards.map(item => <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item}</div>)}
+                    <Row>
+                    {(this.state.debugBoards5 ? 
+                            <div>
+                            <h5>Level 5</h5> 
+                            {this.state.debugBoards5.map(item => {
+                            return (
+                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
+                              )
+                            })}
+                             </div>
+                            : null )}
+                    </Row>
+                    <Row>
+                    {(this.state.debugBoards4 ? 
+                            <div>
+                            <h5>Level 4</h5> 
+                            {this.state.debugBoards4.map(item => {
+                            return (
+                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
+                              )
+                            })}
+                             </div>
+                            : null )}
+                    </Row>
+                    <Row>
+                    {(this.state.debugBoards3 ? 
+                            <div>
+                            <h5>Level 3</h5> 
+                            {this.state.debugBoards3.map(item => {
+                            return (
+                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
+                              )
+                            })}
+                            </div>
+                          : null )}
+                    </Row>   
+                    <Row>
+                    {(this.state.debugBoards2 ? 
+                            <div>
+                            <h5>Level 2</h5> 
+                            {this.state.debugBoards2.map(item => {
+                            return (
+                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
+                              )
+                            })}
+                            </div>
+                          : null )}
+                    </Row>    
+                    <Row>
+                    {(this.state.debugBoards1 ? 
+                            <div>
+                            <h5>Level 1</h5> 
+                            {this.state.debugBoards1.map(item => {
+                            return (
+                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
+                              )
+                            })}
+                            </div>
+                          : null )}
+                    </Row>   
                     
                     </div>
           
