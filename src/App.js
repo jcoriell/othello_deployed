@@ -165,8 +165,10 @@ class App extends React.Component{
     }
     let coordinates = {row: inputRow, col: inputCol};
     */
+   let alpha = -10000
+   let beta = 10000
     
-    let result = this.minimax(gameInfo, gameInfo.activePlayer, 4)
+    let result = this.minimax(gameInfo, gameInfo.activePlayer, 5, alpha, beta)
     console.log(result)
     let coordinates = {row: result.row, col: result.col}
 
@@ -174,7 +176,7 @@ class App extends React.Component{
     
   }
 
-  minimax(gameInfo, player, depth) {
+  minimax(gameInfo, player, depth, alpha, beta) {
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
     // find the row and column of available spots to play in the incoming gamestate
@@ -193,14 +195,14 @@ class App extends React.Component{
     // check if you are at max depth.
     if (depth === 0){
       // if you are at max depth return the score of that node.
-      if (player === black){
+     /* if (player === black){
         let heuristic = 100 * (nodeScore.blackPoints - nodeScore.whitePoints) / (nodeScore.blackPoints + nodeScore.whitePoints)
         return {score: heuristic}
       }
-      if (player === white){
+      if (player === white){*/
         let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
         return {score: heuristic}
-      }
+      //}
           
     }
     else if (availables.length === 0){
@@ -236,25 +238,55 @@ class App extends React.Component{
         // if the player is the (ai) white player, 
         if (player === white){
           //then store the result of calling minimax on the newGameState with the black player and one more level of depth
-          let minimaxResult = this.minimax(result, black, depth - 1)
+          let minimaxResult = this.minimax(result, black, depth - 1, alpha, beta)
           //also set the score of the move object to the score of the result of calling that minimax algorithm
           move.score = minimaxResult.score
+
+          // set the board back to how it was if the play never happened. 
+          for (let j = 0; j < tiles.length; j++){
+            newGameState[tiles[j].row][tiles[j].col] = tiles[j].value
+            newGameStateTranspose[tiles[j].col][tiles[j].row] = tiles[j].value
+          }
+          moves.push(move)
+          /// compare alpha to move.score and set alpha to whichever is larger
+          if (alpha < move.score){
+            alpha = move.score
+          }
+          /// if beta is less than alpha at this point, break out of the parent for loop
+          if (beta <= alpha){
+            break
+          }
         }
         // else, when it is not the AI's turn...
         else {
           //then store the result of calling minimax on the newGameState with the white player and one more level of depth
-          let minimaxResult = this.minimax(result, white, depth - 1)
+          let minimaxResult = this.minimax(result, white, depth - 1, alpha, beta)
           //also set the score of the move object to the score of the result of calling that minimax algorithm
           move.score = minimaxResult.score
-        }
-        // set the board back to how it was if the play never happened.    
-        for (let j = 0; j < tiles.length; j++){
+
+          // set the board back to how it was if the play never happened. 
+          for (let j = 0; j < tiles.length; j++){
             newGameState[tiles[j].row][tiles[j].col] = tiles[j].value
             newGameStateTranspose[tiles[j].col][tiles[j].row] = tiles[j].value
+          }
+
+          // moves.push(move) will add the score to the moves array for this iteration.
+          moves.push(move)
+
+          // compare beta to move.score and set beta to whichever is smaller.
+          if (beta > move.score){
+            beta = move.score
+          }
+          // if beta is less than alpha at this point, break out of the parent for loop
+          if (beta <= alpha){
+            break
+          }
         }
+        // set the board back to how it was if the play never happened.    
+
       
         // moves.push(move) will add the score to the moves array for this iteration.
-        moves.push(move)
+        //moves.push(move)
     }
     // determine the best move to make.
     let bestMove;
