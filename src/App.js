@@ -20,6 +20,8 @@ var black = 1;
 var white = 2;
 const available = 8;
 const blank = 0;
+var possibleMoves = [];
+var prunes = [];
 
 class App extends React.Component{
   constructor(){
@@ -53,6 +55,9 @@ class App extends React.Component{
       debugMode: false,
       pruning: false,
       aiDepth: 3,
+      moves3: [],
+      moves2: [],
+      moves1: []
     }
     this.setPlayer = this.setPlayer.bind(this);
     this.handleGameState = this.handleGameState.bind(this);
@@ -78,6 +83,7 @@ class App extends React.Component{
     this.alphabetaprune = this.alphabetaprune.bind(this);
     this.togglePruning = this.togglePruning.bind(this);
     this.handleDepth = this.handleDepth.bind(this);
+    this.handleDebugDepth = this.handleDebugDepth.bind(this);
   }
 
 
@@ -170,8 +176,11 @@ class App extends React.Component{
     }
     let coordinates = {row: inputRow, col: inputCol};
     */
+   possibleMoves = [];
+   prunes = []
    let coordinates;
    let depth = this.state.aiDepth;
+   this.setState({debugDepth: this.state.aiDepth})
    if (this.state.pruning){
     let alpha = -10000
     let beta = 10000
@@ -207,6 +216,9 @@ class App extends React.Component{
     }
 
     let nodeScore = this.updateScore(newGameState)
+    let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
+    possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
+
     // check if you are at max depth.
     if (depth === 0){
       // if you are at max depth return the score of that node.
@@ -221,7 +233,7 @@ class App extends React.Component{
           
     }
     else if (availables.length === 0){
-      return {score: 0}
+      return {score: 100}
     }
     
     // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
@@ -236,6 +248,8 @@ class App extends React.Component{
         move.value = newGameState[availables[i].row][availables[i].col]
         move.row = availables[i].row;
         move.col = availables[i].col;
+        move.breadth = i;
+        
         
         let tiles = [];
         for (let j = 0; j < newGameState.length; j++){
@@ -248,7 +262,7 @@ class App extends React.Component{
        
         //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
-        move.board = this.createDebugBoard(result)
+        let pruneBoard = this.createDebugBoard(result)
 
         // if the player is the (ai) white player, 
         if (player === white){
@@ -269,6 +283,7 @@ class App extends React.Component{
           }
           /// if beta is less than alpha at this point, break out of the parent for loop
           if (beta <= alpha){
+            prunes.push({depth: depth, breadth: move.breadth, board: pruneBoard})
             break
           }
         }
@@ -294,6 +309,7 @@ class App extends React.Component{
           }
           // if beta is less than alpha at this point, break out of the parent for loop
           if (beta <= alpha){
+            prunes.push({depth: depth, breadth: move.breadth, board: pruneBoard})
             break
           }
         }
@@ -334,14 +350,6 @@ class App extends React.Component{
       }
     }
     
-    let debugBoards = []
-    for(let i = 0; i < moves.length; i++){
-      debugBoards.push({board: moves[i].board, score: moves[i].score, depth: depth});
-    }
-
-    let key = 'debugBoards' + depth
-  
-    this.setState({ [key]: debugBoards })
     return moves[bestMove];
   }
   
@@ -356,7 +364,6 @@ class App extends React.Component{
     // find the row and column of available spots to play in the incoming gamestate
     let availables = [];
     
-
     for (let i = 0; i < newGameState.length; i++){
       for (let j = 0; j < newGameState[i].length; j++){
         if (newGameState[i][j] === available){
@@ -366,7 +373,10 @@ class App extends React.Component{
     }
 
     let nodeScore = this.updateScore(newGameState)
+    let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
+
     // check if you are at max depth.
+    possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
     if (depth === 0){
       // if you are at max depth return the score of that node.
      /* if (player === black){
@@ -374,14 +384,14 @@ class App extends React.Component{
         return {score: heuristic}
       }
       if (player === white){*/
-        let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
         return {score: heuristic}
       //}
           
     }
     else if (availables.length === 0){
-      return {score: 0}
+      return {score: 100}
     }
+    
     
     // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
     let moves = [];
@@ -408,6 +418,9 @@ class App extends React.Component{
         //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
         move.board = this.createDebugBoard(result)
+        move.breadth = i
+
+        
 
         // if the player is the (ai) white player, 
         if (player === white){
@@ -421,6 +434,7 @@ class App extends React.Component{
             newGameState[tiles[j].row][tiles[j].col] = tiles[j].value
             newGameStateTranspose[tiles[j].col][tiles[j].row] = tiles[j].value
           }
+          
           moves.push(move)
           /// compare alpha to move.score and set alpha to whichever is larger
 
@@ -439,6 +453,7 @@ class App extends React.Component{
           }
 
           // moves.push(move) will add the score to the moves array for this iteration.
+          
           moves.push(move)
 
           // compare beta to move.score and set beta to whichever is smaller.
@@ -479,18 +494,21 @@ class App extends React.Component{
         }
       }
     }
-
-
-    
-    let debugBoards = []
-    for(let i = 0; i < moves.length; i++){
-      debugBoards.push({board: moves[i].board, score: moves[i].score, depth: depth});
-    }
-
-    let key = 'debugBoards' + depth
+    /*
   
-    this.setState({ [key]: debugBoards })
+    let key = 'moves' + depth
+    
+    if (key === 'moves3'){
+      this.setState({[key]: [...this.state.moves3, moves]})
+    }
+    if (key === 'moves2'){
+      this.setState({[key]: [...this.state.moves2, moves]})
+    }
+    if (key === 'moves1'){
+      this.setState({[key]: [...this.state.moves1, moves]})
+    }*/
     return moves[bestMove];
+    
   }
   
 
@@ -1116,6 +1134,13 @@ class App extends React.Component{
     this.setState({aiDepth: depth})
   }
 
+  handleDebugDepth(change){
+    let depth = this.state.debugDepth + change;
+    this.setState({debugDepth: depth})
+  }
+
+
+
   render(){
 
     let gameInfo = {  
@@ -1224,68 +1249,132 @@ class App extends React.Component{
                   </Form>
                   </Container>
 
+
+    let debugMode2 = <div style={{margin: '50px'}} >
+                      <h4>Debug Mode</h4>
+                    
+
+                      {this.state.debugDepth !== undefined ? 
+                        <div>
+                          <p>
+                          {this.state.debugDepth !== this.state.aiDepth ? <button onClick = {this.handleDebugDepth.bind(this, 1)}>Go Up One Level</button> : null}
+                          {this.state.debugDepth !== 0 ? <button onClick = {this.handleDebugDepth.bind(this, -1)}>Go Down One Level</button> : null}
+                        </p>
+                        <p>Level {this.state.debugDepth}</p> 
+                        </div> : 
+                        null
+                
+                      }
+                      
+                      <Row>
+                        <Col xs = {12}>
+                        {possibleMoves.map((item, index) => {                        
+                          if (item.depth === this.state.debugDepth){
+                            
+                          return(
+                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}Depth: {item.depth}; Score: {item.score}</div>
+                            )
+                   
+                          }
+                          else{
+                            return(
+                              null
+                            )
+                          }
+                        
+
+                 
+                      }
+                        )
+                      }
+                       
+                        </Col>
+                      </Row>
+                     
+                      <Row style={{border: '1px solid black'}}>
+                      <Col xs = {12}>
+                      {this.state.pruning ? <h5>Prunes:</h5> : null}
+                      {prunes.map(item => {
+                        if (item.depth-1 === this.state.debugDepth){
+                          return(
+                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}Depth: {item.depth-1}; </div>
+                          )
+                          
+                        }
+                        else{
+                          return(
+                            null
+                          )
+                        }
+                      }
+                      )}
+                      </Col>
+                      </Row>
+                      
+                    </div>
+
     let debugMode = <div style={{margin: '50px'}} >
                     <h4>Debug Mode</h4>
-                    <Row>
-                    {(this.state.debugBoards5 ? 
-                            <div>
-                            <h5>Level 5</h5> 
-                            {this.state.debugBoards5.map(item => {
-                            return (
-                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
-                              )
-                            })}
-                             </div>
-                            : null )}
-                    </Row>
-                    <Row>
-                    {(this.state.debugBoards4 ? 
-                            <div>
-                            <h5>Level 4</h5> 
-                            {this.state.debugBoards4.map(item => {
-                            return (
-                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
-                              )
-                            })}
-                             </div>
-                            : null )}
-                    </Row>
-                    <Row>
-                    {(this.state.debugBoards3 ? 
-                            <div>
-                            <h5>Level 3</h5> 
-                            {this.state.debugBoards3.map(item => {
-                            return (
-                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
-                              )
-                            })}
-                            </div>
-                          : null )}
-                    </Row>   
-                    <Row>
-                    {(this.state.debugBoards2 ? 
-                            <div>
-                            <h5>Level 2</h5> 
-                            {this.state.debugBoards2.map(item => {
-                            return (
-                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
-                              )
-                            })}
-                            </div>
-                          : null )}
-                    </Row>    
-                    <Row>
-                    {(this.state.debugBoards1 ? 
-                            <div>
-                            <h5>Level 1</h5> 
-                            {this.state.debugBoards1.map(item => {
-                            return (
-                              <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item.board}{item.score}</div>
-                              )
-                            })}
-                            </div>
-                          : null )}
-                    </Row>   
+                    
+                    {this.state.moves3.map(item => {
+                      let child = item.map(item2 => {
+                            return(
+                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item2.board}</div>
+                            )
+                          }
+                      )
+                   
+
+                      return (
+                        <Row style = {{borderTop: '1px solid #cccccc'}}>
+                        {child}
+                        </Row>
+
+                      )
+            
+                    }
+                    
+                    )}  
+
+                    {this.state.moves2.map(item => {
+                      let child = item.map(item2 => {
+                            return(
+                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item2.board}</div>
+                            )
+                          }
+                      )
+                   
+
+                      return (
+                        <Row style = {{borderTop: '1px solid #cccccc'}}>
+                        {child}
+                        </Row>
+
+                      )
+            
+                    }
+                    
+                    )}   
+
+                    {this.state.moves1.map(item => {
+                      let child = item.map(item2 => {
+                            return(
+                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item2.board}</div>
+                            )
+                          }
+                      )
+                   
+
+                      return (
+                        <Row style = {{borderTop: '1px solid #cccccc'}}>
+                        {child}
+                        </Row>
+
+                      )
+            
+                    }
+                    
+                    )} 
                     
                     </div>
           
@@ -1296,7 +1385,7 @@ class App extends React.Component{
         <Col className = 'settings' xs  = {3}>{settings}</Col>
         <Col className = 'gameMode' xs = {4}>{gameMode}</Col>
       </Row>
-        {this.state.debugMode ? <Row style = {{marginTop: '200px'}}><Col className = 'debug'>{debugMode}</Col></Row> : null}
+        {this.state.debugMode ? <Row style = {{marginTop: '200px'}}><Col className = 'debug'>{debugMode2}</Col></Row> : null}
       </React.Fragment> 
     )
   }
