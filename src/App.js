@@ -374,6 +374,15 @@ class App extends React.Component{
 
     let nodeScore = this.updateScore(newGameState)
     let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
+    if (availables.length === 0 && nodeScore.whitePoints > nodeScore.blackPoints){
+      heuristic = 100
+    }
+    else if (availables.length === 0 && nodeScore.blackPoints > nodeScore.whitePoints){
+      heuristic = -100
+    }
+    else if (availables.length === 0){
+      heuristic = 0
+    }
 
     // check if you are at max depth.
     possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
@@ -389,7 +398,9 @@ class App extends React.Component{
           
     }
     else if (availables.length === 0){
-      return {score: 100}
+
+        return {score: heuristic}
+    
     }
     
     
@@ -1382,7 +1393,7 @@ class App extends React.Component{
     return(
       <React.Fragment>
       <Row>
-        <Col className = 'settings' xs  = {3}>{settings}</Col>
+        <Col className = 'settings' xs  = {3}>{this.state.gameMode === '2playergame' || this.state.gameMode === 'aigame' ? settings : null}</Col>
         <Col className = 'gameMode' xs = {4}>{gameMode}</Col>
       </Row>
         {this.state.debugMode ? <Row style = {{marginTop: '200px'}}><Col className = 'debug'>{debugMode2}</Col></Row> : null}
