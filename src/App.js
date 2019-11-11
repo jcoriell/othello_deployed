@@ -22,6 +22,7 @@ const available = 8;
 const blank = 0;
 var possibleMoves = [];
 var prunes = [];
+var movesSoFar = [];
 
 class App extends React.Component{
   constructor(){
@@ -57,7 +58,8 @@ class App extends React.Component{
       aiDepth: 3,
       moves3: [],
       moves2: [],
-      moves1: []
+      moves1: [],
+      programTrace: false,
     }
     this.setPlayer = this.setPlayer.bind(this);
     this.handleGameState = this.handleGameState.bind(this);
@@ -84,6 +86,8 @@ class App extends React.Component{
     this.togglePruning = this.togglePruning.bind(this);
     this.handleDepth = this.handleDepth.bind(this);
     this.handleDebugDepth = this.handleDebugDepth.bind(this);
+    this.updateMovesSoFar = this.updateMovesSoFar.bind(this);
+    this.toggleProgramTrace = this.toggleProgramTrace.bind(this);
   }
 
 
@@ -112,12 +116,19 @@ class App extends React.Component{
  
   }
 
+  updateMovesSoFar(gameInfo){
+    movesSoFar.push(this.createDebugBoard(gameInfo))
+  }
+
+  
+
 
 
   handleAI(gameInfo){
     console.log('ai has been handled')
     let coordinates = this.bestPlay(gameInfo)
     let newGameState = this.handleGameState(coordinates.row, coordinates.col, gameInfo.activePlayer, gameInfo.gameState, gameInfo.gameStateTranspose)
+    this.updateMovesSoFar(newGameState);
     this.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
   }
 
@@ -217,7 +228,20 @@ class App extends React.Component{
 
     let nodeScore = this.updateScore(newGameState)
     let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
-    possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
+
+    if (availables.length === 0 && nodeScore.whitePoints > nodeScore.blackPoints){
+      heuristic = 100
+    }
+    else if (availables.length === 0 && nodeScore.blackPoints > nodeScore.whitePoints){
+      heuristic = -100
+    }
+    else if (availables.length === 0){
+      heuristic = 0
+    }
+
+    if (this.state.debugMode){
+      possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
+    }
 
     // check if you are at max depth.
     if (depth === 0){
@@ -227,13 +251,13 @@ class App extends React.Component{
         return {score: heuristic}
       }
       if (player === white){*/
-        let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
+        //let heuristic = 100 * (nodeScore.whitePoints - nodeScore.blackPoints) / (nodeScore.whitePoints + nodeScore.blackPoints)
         return {score: heuristic}
       //}
           
     }
     else if (availables.length === 0){
-      return {score: 100}
+      return {score: heuristic}
     }
     
     // create something that can store the scores for each move that is made (an array called moveScores = []). these will be evaluated later.
@@ -262,7 +286,9 @@ class App extends React.Component{
        
         //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
-        let pruneBoard = this.createDebugBoard(result)
+        if (this.state.debugMode){
+          var pruneBoard = this.createDebugBoard(result)
+        }
 
         // if the player is the (ai) white player, 
         if (player === white){
@@ -283,7 +309,9 @@ class App extends React.Component{
           }
           /// if beta is less than alpha at this point, break out of the parent for loop
           if (beta <= alpha){
-            prunes.push({depth: depth, breadth: move.breadth, board: pruneBoard})
+            if(this.state.debugMode){
+              prunes.push({depth: depth, breadth: move.breadth, board: pruneBoard})
+            }
             break
           }
         }
@@ -309,7 +337,9 @@ class App extends React.Component{
           }
           // if beta is less than alpha at this point, break out of the parent for loop
           if (beta <= alpha){
-            prunes.push({depth: depth, breadth: move.breadth, board: pruneBoard})
+            if (this.state.debugMode){
+              prunes.push({depth: depth, breadth: move.breadth, board: pruneBoard})
+            }
             break
           }
         }
@@ -385,7 +415,9 @@ class App extends React.Component{
     }
 
     // check if you are at max depth.
-    possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
+    if(this.state.debugMode){
+      possibleMoves.push({board: this.createDebugBoard(gameInfo), depth: depth, score: heuristic})
+    }
     if (depth === 0){
       // if you are at max depth return the score of that node.
      /* if (player === black){
@@ -428,8 +460,8 @@ class App extends React.Component{
        
         //simiulate a play by the current player
         let result = this.handleGameState(availables[i].row, availables[i].col, player, newGameState, newGameStateTranspose)
-        move.board = this.createDebugBoard(result)
-        move.breadth = i
+        //move.board = this.createDebugBoard(result)
+        //move.breadth = i
 
         
 
@@ -1117,6 +1149,8 @@ class App extends React.Component{
                   white = {white}
                   available = {available}
                   humanIsBlack = {this.state.humanIsBlack}
+                  updateMovesSoFar = {this.updateMovesSoFar}
+
               
                   />
               )
@@ -1139,6 +1173,10 @@ class App extends React.Component{
 
   togglePruning(){
     this.setState({pruning: !this.state.pruning})
+  }
+
+  toggleProgramTrace(){
+    this.setState({programTrace: !this.state.programTrace})
   }
 
   handleDepth(depth){
@@ -1165,6 +1203,22 @@ class App extends React.Component{
                           availablePoints: this.state.availablePoints
                         }
                     }
+    
+    let allMoves = <Row style={{margin: '20px'}}>
+                        <Col xs = {12}>
+                        <h5>Game Trace</h5>
+                        {movesSoFar.map((item) => {    
+                            return(                 
+                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item}</div>
+                            )
+                            }
+                        )
+                        }
+
+                        </Col>
+                    </Row>
+          
+    
 
     let gameMode = (this.state.gameMode === 'menu' ? 
                     <Container className = 'gamecontainer'>
@@ -1172,12 +1226,13 @@ class App extends React.Component{
                         <button onClick={this.handleGameMode.bind(this, '2playergame')}>Human v. Human</button>
                         <button onClick={this.handleGameMode.bind(this, 'aigame')}>Human v. AI</button>
                     </Container> :
-                    <Container className = 'gamecontainer'>
+                    <div className = 'gamecontainer'>
                       
                       <div className = 'gameboard' style={{display: 'inline-block'}}
                       onTransitionEnd={this.state.gameMode === 'aigame' && this.state.activePlayer === white ? this.handleAI.bind(this, gameInfo) : null}
                          >
-                        {this.createGameBoard(this.state.gameState)}
+                        {this.createGameBoard(this.state.gameState)}   
+          
                       </div>
                      
                       
@@ -1190,17 +1245,27 @@ class App extends React.Component{
                           <h5>Score for Player 2:</h5>
                           <p>{this.state.whitePoints}</p>
                         </div>
-                        <div>
-                          {this.state.gameMode === 'gameover' ? <h6>Game Over - {this.state.blackPoints === this.state.whitePoints ? 'Tie Game' : 
-                                                                                (this.state.blackPoints > this.state.whitePoints ? 'Black Wins' : 'White Wins')} </h6> :  null}
-                        </div>    
-                      
-                    </Container> 
+ 
+                        {this.state.gameMode === 'gameover' ? 
+                         <div style={{position: 'absolute', top: '215px', left: '180px', width: '200px', backgroundColor: 'rgba(200,200,200,0.9)', textAlign: 'center', padding: '15px', color: 'black'}}>
+                              <h5>Game Over <br /> {this.state.blackPoints === this.state.whitePoints ? 
+                              'Tie Game' : (this.state.blackPoints > this.state.whitePoints ? 'Black Wins' : 'White Wins')} </h5> 
+                        </div> : null }
+                      </div>
                       )
     let settings = <Container>
                     <h4>Settings</h4>
                     <h6 style={{marginTop: '1em'}}>Choose your color:</h6>
                     <Button variant={this.state.humanIsBlack ? 'dark' : 'light'} onClick = {this.toggleColor}>Toggle Color</Button>
+                    <h6 style={{marginTop: '1em'}}>Current Game Trace</h6>
+                    <Form>
+                      <Form.Check 
+                        onClick={this.toggleProgramTrace}
+                        type="switch"
+                        id="trace-switch"
+                        label= {this.state.programTrace ? "On" : "Off"}
+                      />
+                    </Form>
                     <h6 style={{marginTop: '1em'}}>Debug Mode</h6>
                     <Form>
                       <Form.Check 
@@ -1324,70 +1389,7 @@ class App extends React.Component{
                       
                     </div>
 
-    let debugMode = <div style={{margin: '50px'}} >
-                    <h4>Debug Mode</h4>
-                    
-                    {this.state.moves3.map(item => {
-                      let child = item.map(item2 => {
-                            return(
-                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item2.board}</div>
-                            )
-                          }
-                      )
-                   
-
-                      return (
-                        <Row style = {{borderTop: '1px solid #cccccc'}}>
-                        {child}
-                        </Row>
-
-                      )
-            
-                    }
-                    
-                    )}  
-
-                    {this.state.moves2.map(item => {
-                      let child = item.map(item2 => {
-                            return(
-                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item2.board}</div>
-                            )
-                          }
-                      )
-                   
-
-                      return (
-                        <Row style = {{borderTop: '1px solid #cccccc'}}>
-                        {child}
-                        </Row>
-
-                      )
-            
-                    }
-                    
-                    )}   
-
-                    {this.state.moves1.map(item => {
-                      let child = item.map(item2 => {
-                            return(
-                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item2.board}</div>
-                            )
-                          }
-                      )
-                   
-
-                      return (
-                        <Row style = {{borderTop: '1px solid #cccccc'}}>
-                        {child}
-                        </Row>
-
-                      )
-            
-                    }
-                    
-                    )} 
-                    
-                    </div>
+  
           
   
     return(
@@ -1396,6 +1398,7 @@ class App extends React.Component{
         <Col className = 'settings' xs  = {3}>{this.state.gameMode === '2playergame' || this.state.gameMode === 'aigame' ? settings : null}</Col>
         <Col className = 'gameMode' xs = {4}>{gameMode}</Col>
       </Row>
+        {this.state.programTrace ? <Row style = {{marginTop: '200px'}}><Col className = 'debug'>{allMoves}</Col></Row> : null}
         {this.state.debugMode ? <Row style = {{marginTop: '200px'}}><Col className = 'debug'>{debugMode2}</Col></Row> : null}
       </React.Fragment> 
     )

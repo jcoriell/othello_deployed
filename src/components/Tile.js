@@ -12,10 +12,12 @@ class Tile extends React.Component{
     handleClick(){
         if (this.props.gameMode === '2playergame' && this.props.tileValue === this.props.available ){
            let newGameState = this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
+           this.props.updateMovesSoFar(newGameState);
            this.props.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
         }
         if (this.props.gameMode === 'aigame' && this.props.tileValue === this.props.available && this.props.activePlayer === this.props.black){
            let newGameState = this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
+           this.props.updateMovesSoFar(newGameState);
            this.props.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
         }
         
