@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "c520b45f51ce58ec6fe937299c1ba311",
+    "revision": "0bc45d92972de9501437afed7e45c4d9",
     "url": "/othello_deployed/index.html"
   },
   {
-    "revision": "c7e2724df87264875f80",
+    "revision": "a21f8a966190d754488e",
     "url": "/othello_deployed/static/css/main.a1ff9502.chunk.css"
   },
   {
@@ -12,8 +12,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/othello_deployed/static/js/2.d16d2d18.chunk.js"
   },
   {
-    "revision": "c7e2724df87264875f80",
-    "url": "/othello_deployed/static/js/main.fcc1477c.chunk.js"
+    "revision": "a21f8a966190d754488e",
+    "url": "/othello_deployed/static/js/main.6212f526.chunk.js"
   },
   {
     "revision": "8c1d61e80e0da049bd30",
