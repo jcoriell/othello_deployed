@@ -90,7 +90,7 @@ class App extends React.Component{
     this.toggleProgramTrace = this.toggleProgramTrace.bind(this);
   }
 
-
+  // this functions takes the in all of the pertinent game information and creates an HTML element that is a board based on that element.
   createDebugBoard(gameInfo){
   
     let result = gameInfo.gameState.map((i, rowIndex) => {
@@ -116,6 +116,7 @@ class App extends React.Component{
  
   }
 
+  //this function takes in the game information, creates a board, and then puts that board in the array tracking all the moves previously executed.
   updateMovesSoFar(gameInfo){
     movesSoFar.push(this.createDebugBoard(gameInfo))
   }
@@ -123,19 +124,23 @@ class App extends React.Component{
   
 
 
-
+  // this function takes the gameinfo and simulates the AI playing. aftre the AI plays, it updates te game state.
   handleAI(gameInfo){
-    console.log('ai has been handled')
+    console.log('Determining best play for AI...')
     let coordinates = this.bestPlay(gameInfo)
     let newGameState = this.handleGameState(coordinates.row, coordinates.col, gameInfo.activePlayer, gameInfo.gameState, gameInfo.gameStateTranspose)
+    console.log('AI played. The result follows')
+    console.log(newGameState.gameState);
     this.updateMovesSoFar(newGameState);
     this.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
   }
 
+  // this function is called when the game mode needs to change. the modes are 'menu', '2playergame', 'aigame' and 'gameover'
   handleGameMode(mode){
     this.setState({gameMode: mode})
   }
 
+  //this function takes in the game state and outputs the number of points black and white each have. it always finds the number of spots labeled 'available' on the board
   updateScore(gameState){
     let blackScore = 0;
     let whiteScore = 0;
@@ -153,6 +158,7 @@ class App extends React.Component{
     return result
   }
 
+  // this function takes the score and determines who is winning. if the board is full it asks handle game mode to set the game to 'gameover'
   checkForWin(blackScore, whiteScore, availableSpots){
       let winning = null;
         if (blackScore > whiteScore){
@@ -170,6 +176,7 @@ class App extends React.Component{
       return winning;
   }
 
+  // this function is takes in the game info and outputs the coordinates of the best play for the AI
   bestPlay(gameInfo){
     /*
     let inputRow;
@@ -197,13 +204,13 @@ class App extends React.Component{
     let beta = 10000
     
     let result = this.alphabetaprune(gameInfo, gameInfo.activePlayer, depth, alpha, beta)
-    console.log(result)
+    console.log('Row: ' + result.row + '; Col: ' + result.col)
     coordinates = {row: result.row, col: result.col}
    }
 
    else { 
     let result = this.minimax(gameInfo, gameInfo.activePlayer, depth)
-    console.log(result)
+    console.log('Row: ' + result.row + '; Col: ' + result.col)
     coordinates = {row: result.row, col: result.col}
    }
 
@@ -211,6 +218,7 @@ class App extends React.Component{
     
   }
 
+  //this function performs minimax with alpha beta pruning. debugboards are also created here. it outputs the best move available.
   alphabetaprune(gameInfo, player, depth, alpha, beta) {
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
@@ -268,7 +276,6 @@ class App extends React.Component{
         let move = {};
         // set the row of the move object to row of the ith item in the array of available spots to play
         // set the col of the move object to the col of the ith item in the array of available spots ot play
-        ///something might not be right here?????
         move.value = newGameState[availables[i].row][availables[i].col]
         move.row = availables[i].row;
         move.col = availables[i].col;
@@ -387,7 +394,7 @@ class App extends React.Component{
 
 
 
-
+  // this function is the same as the previous, but it does not do alpha beta pruning.
   minimax(gameInfo, player, depth) {
     let newGameState = gameInfo.gameState;
     let newGameStateTranspose = gameInfo.gameStateTranspose;
@@ -444,7 +451,6 @@ class App extends React.Component{
         let move = {};
         // set the row of the move object to row of the ith item in the array of available spots to play
         // set the col of the move object to the col of the ith item in the array of available spots ot play
-        ///something might not be right here?????
         move.value = newGameState[availables[i].row][availables[i].col]
         move.row = availables[i].row;
         move.col = availables[i].col;
@@ -555,6 +561,7 @@ class App extends React.Component{
   }
   
 
+  //this function checks for available moves to the right of tile x with rowIndex and colIndex
   checkTileOnRight(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check the next tile.
@@ -586,6 +593,7 @@ class App extends React.Component{
   }
 }
 
+  //this function determines the availability of tiles to the left of tile x
   checkTileOnLeft(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check the previous tile.
@@ -618,6 +626,7 @@ class App extends React.Component{
   
   }
 
+  //this function determines the availability of tiles above a given tile x
   checkTileAbove(rowIndex, colIndex, activePlayer, tempGameStateTranspose){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check above.
@@ -640,6 +649,7 @@ class App extends React.Component{
     }
   }
 
+  //this function determines the availability of tiles below a given tile x
   checkTileBelow(rowIndex, colIndex, activePlayer, tempGameStateTranspose){
     let inactivePlayer = (activePlayer === black ? white : black)
     // if you're on the edge, don't check above.
@@ -661,7 +671,7 @@ class App extends React.Component{
     }
   }
 
-
+  //this function determines the availability of tiles in the diagonal that extends up and to the right of a given tile x
   checkNorthEast(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  0 || colIndex === 7){return false}
@@ -692,7 +702,7 @@ class App extends React.Component{
 
   }
 
-
+//this function determines the availability of tiles in the diagonal that extends up and to the left of a given tile x
   checkNorthWest(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  0 || colIndex === 0){return false}
@@ -723,6 +733,7 @@ class App extends React.Component{
 
   }
 
+  //this function determines the availability of tiles in the diagonal that extends down and to the right of a given tile x
   checkSouthEast(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  7 || colIndex === 7){return false}
@@ -753,6 +764,7 @@ class App extends React.Component{
 
   }
 
+  //this function determines the availability of tiles in the diagonal that extends down and to the left of a given tile x
   checkSouthWest(rowIndex, colIndex, activePlayer, tempGameState){
     let inactivePlayer = (activePlayer === black ? white : black)
     if (rowIndex ===  7 || colIndex === 0){return false}
@@ -783,7 +795,7 @@ class App extends React.Component{
  
   }
 
-
+ // this function switches the player who is currently active
   setPlayer(activePlayer){
     if(activePlayer === black){
       this.setState({activePlayer: white, inactivePlayer: black})
@@ -801,7 +813,7 @@ class App extends React.Component{
      let updatedGameStateTranspose = gameStateTranspose;
      let inactivePlayer = (activePlayer === black ? white : black)
 
-    // color downward
+    // this block of code determines the color of pieces below the tile where the active player just played
     let downExistance = [];
     let i_d = rowIndex + 1;
     let j_d = colIndex;
@@ -834,7 +846,7 @@ class App extends React.Component{
     }
 
 
-    // color upward
+    // this block of code determines the color of pieces above the tile where the active player just played
     let upExistance = [];
     let i_u = rowIndex - 1 ;
     let j_u = colIndex;
@@ -866,7 +878,7 @@ class App extends React.Component{
      }
     }
 
-    //color to the left
+    // this block of code determines the color of pieces to the left of the tile where the active player just played
     let leftExistance = [];
     let i_l = rowIndex;
     let j_l = colIndex - 1;
@@ -898,7 +910,7 @@ class App extends React.Component{
      }
     }
 
-    // color to the right
+    // this block of code determines the color of pieces to the right of the tile where the active player just played
      let rightExistance = [];
      let i_r = rowIndex;
      let j_r = colIndex + 1;
@@ -931,7 +943,7 @@ class App extends React.Component{
       }
      }
 
-     //check north west diagonal existance and color
+     // this block of code determines the color of pieces up and to the right of the tile where the active player just played
      let nwDiagonalExistance = [];
      let i_nwd = rowIndex - 1;
      let j_nwd = colIndex + 1;
@@ -966,7 +978,7 @@ class App extends React.Component{
       }
      }
 
-      //check north east diagonal existance and color
+      // this block of code determines the color of pieces up and to the left of the tile where the active player just played
       let neDiagonalExistance = [];
       let i_ned = rowIndex - 1;
       let j_ned = colIndex - 1; 
@@ -1001,7 +1013,7 @@ class App extends React.Component{
         }
       }
     
-      //check south east diagonal existance and color
+      // this block of code determines the color of pieces down and to the right of the tile where the active player just played
       let seDiagonalExistance = [];
       let i_sed = rowIndex + 1;
       let j_sed = colIndex + 1;
@@ -1037,7 +1049,7 @@ class App extends React.Component{
         }
       }
   
-      //check south west diagonal existance and color
+      // this block of code determines the color of pieces down and to the left of the tile where the active player just played
       let swDiagonalExistance = [];
       let i_swd = rowIndex + 1;
       let j_swd = colIndex - 1;
@@ -1085,7 +1097,8 @@ class App extends React.Component{
 
      let tempGameState = updatedGameState
      let tempGameStateTranspose = updatedGameStateTranspose
-     //Determine valid tiles surrounding the current player (currently excluding edge cases)
+
+     //Go through each tile and determine if it should be available for the next player.
      updatedGameState = updatedGameState.map((i, index_i) => {
        return(
           i.map((j, index_j) => {
@@ -1115,6 +1128,7 @@ class App extends React.Component{
      return result
   }
 
+  // update the App's state. Called after a player players and after the game board is handled. this causes the render method to run since it updates the state
   updateState(updatedGameState, updatedGameStateTranspose, activePlayer){
     let newScore = this.updateScore(updatedGameState)
     this.checkForWin(newScore.blackPoints, newScore.whitePoints, newScore.availablePoints)
@@ -1126,6 +1140,7 @@ class App extends React.Component{
     this.setPlayer(activePlayer);
   }
 
+  // creates the gameboard when called. this is called from within the render method. the render method runs anytime the state is updated.
   createGameBoard(gameState){
     let result = gameState.map((i, rowIndex) => {
     
@@ -1163,35 +1178,42 @@ class App extends React.Component{
       return result
   }
   
+  //toggle the colors of the players
   toggleColor(){
     this.setState({humanIsBlack: !this.state.humanIsBlack})
   }
 
+  //turns the debug mode on/off
   toggleDebug(){
     this.setState({debugMode: !this.state.debugMode})
   }
 
+  //turns alpha beta pruning on/off
   togglePruning(){
     this.setState({pruning: !this.state.pruning})
   }
 
+  //turns the program trace view on and off
   toggleProgramTrace(){
     this.setState({programTrace: !this.state.programTrace})
   }
 
+  //adjusts the depth of the AI
   handleDepth(depth){
     this.setState({aiDepth: depth})
   }
 
+  //handles the depth of the debug mode
   handleDebugDepth(change){
     let depth = this.state.debugDepth + change;
     this.setState({debugDepth: depth})
   }
 
 
-
+  // this function is called anytime the state of the App updates.
   render(){
 
+    // stores the game's info
     let gameInfo = {  
                       gameState: this.state.gameState, 
                       gameStateTranspose: this.state.gameStateTranspose, 
@@ -1204,12 +1226,13 @@ class App extends React.Component{
                         }
                     }
     
+    // stores the HTML element that displays the program trace               
     let allMoves = <Row style={{margin: '20px'}}>
                         <Col xs = {12}>
                         <h5>Game Trace</h5>
-                        {movesSoFar.map((item) => {    
+                        {movesSoFar.map((item, index) => {    
                             return(                 
-                            <div style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item}</div>
+                            <div key = {index} style = {{width: '400px', height: '400px', margin: '2em 2em', float: 'left'}}>{item}</div>
                             )
                             }
                         )
@@ -1219,7 +1242,7 @@ class App extends React.Component{
                     </Row>
           
     
-
+    // stores the html element of the game.
     let gameMode = (this.state.gameMode === 'menu' ? 
                     <Container className = 'gamecontainer'>
                         <h3>Choose A Mode:</h3>
@@ -1253,6 +1276,8 @@ class App extends React.Component{
                         </div> : null }
                       </div>
                       )
+
+    //stores the html element of the settings
     let settings = <Container>
                     <h4>Settings</h4>
                     <h6 style={{marginTop: '1em'}}>Choose your color:</h6>
@@ -1325,7 +1350,7 @@ class App extends React.Component{
                   </Form>
                   </Container>
 
-
+    // stores the html element of the debug mode
     let debugMode2 = <div style={{margin: '50px'}} >
                       <h4>Debug Mode</h4>
                     
@@ -1391,7 +1416,7 @@ class App extends React.Component{
 
   
           
-  
+    // returns the entire game to be displayed.
     return(
       <React.Fragment>
       <Row>

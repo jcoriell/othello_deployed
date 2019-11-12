@@ -16,7 +16,11 @@ class Tile extends React.Component{
            this.props.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
         }
         if (this.props.gameMode === 'aigame' && this.props.tileValue === this.props.available && this.props.activePlayer === this.props.black){
-           let newGameState = this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
+            console.log('Human chose their play')
+            console.log('Row: ' + this.props.rowIndex + '; Col: ' + this.props.colIndex)
+            let newGameState = this.props.handleGameState(this.props.rowIndex, this.props.colIndex, this.props.activePlayer, this.props.gameState, this.props.gameStateTranspose);
+           console.log('Human played. The result follows')
+           console.log(newGameState.gameState);
            this.props.updateMovesSoFar(newGameState);
            this.props.updateState(newGameState.gameState, newGameState.gameStateTranspose, newGameState.activePlayer)
         }
