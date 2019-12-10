@@ -1,7 +1,6 @@
 /*
 Joshua Coriell
 Tuesday, Novemeber 12
-CWID: 101-75-228
 Assignment #3 - Othello
 
 Description:
